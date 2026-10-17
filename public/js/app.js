@@ -14,6 +14,7 @@ import {
   isVapidReady
 } from "./config.js";
 import { SENSORS, loadSensorAudioPayload } from "./sensors.js";
+import { getCurrentLang, setLanguage, t } from "./i18n.js";
 
 // Official Firebase JS SDK (gstatic CDN)
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
@@ -38,15 +39,17 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-messaging.js";
 
 // ----------------------------------------------------------------------------
-// Hardware Node Registry (With Content-Relevant Emojis for GIS Map & Registry)
+// Hardware Node Registry (With Bilingual Thai/English Metadata & Contextual Emojis)
 // ----------------------------------------------------------------------------
 const HARDWARE_NODES = [
   {
     node_id: "S01",
     sensor_name: "Kui Buri North Gate",
     thai_zone: "ประตูกุยบุรีเหนือ · จ.ประจวบคีรีขันธ์",
+    en_zone: "North Gate Sector · Kui Buri National Park",
     content_icon: "🐘",
     content_role: "ตรวจจับเสียงช้างป่าร้องแปร๋น (Elephant Vocalization)",
+    content_role_en: "Asian Elephant Vocalization & Perimeter Intrusion Detection",
     hardware_type: "ESP32-S3 Edge Mic + BME280",
     modalities: ["Audio", "Temp", "Humidity", "Light"],
     protocol: "HTTPS / MQTT (Solar 4G)",
@@ -55,6 +58,7 @@ const HARDWARE_NODES = [
     location: { lat: 12.16, lng: 99.53 },
     telemetry: { temp_c: 27.1, humidity_rh: 74, light_lux: 380, ultrasonic_khz: 42.5 },
     last_sound: "🐘 เสียงช้างป่าร้องแปร๋น (AI 94%)",
+    last_sound_en: "🐘 Asian Elephant Trumpet Detected (AI 94%)",
     audio_url: "audio/elephant_1.mp3",
     can_simulate: true
   },
@@ -62,8 +66,10 @@ const HARDWARE_NODES = [
     node_id: "S02",
     sensor_name: "Ban Rai Farm Edge",
     thai_zone: "แนวรั้วไร่บ้านรวมไทย · จ.ประจวบคีรีขันธ์",
+    en_zone: "Ban Ruam Thai Crop Buffer · Prachuap Khiri Khan",
     content_icon: "🐘",
     content_role: "เฝ้าระวังช้างป่าประชิดพื้นที่เกษตรกรรม",
+    content_role_en: "Human-Elephant Conflict (HEC) Crop Boundary Early Warning",
     hardware_type: "Raspberry Pi 4 + Acoustic + IR Bridge",
     modalities: ["Audio", "Image Trap", "Temp", "Humidity"],
     protocol: "HTTPS REST / 4G LTE",
@@ -72,6 +78,7 @@ const HARDWARE_NODES = [
     location: { lat: 12.14, lng: 99.55 },
     telemetry: { temp_c: 27.8, humidity_rh: 71, light_lux: 510, ultrasonic_khz: 38.0 },
     last_sound: "🐘 เฝ้าระวังด่านช้างออกไร่สับปะรด",
+    last_sound_en: "🐘 Monitoring Pineapple Farm Corridor",
     audio_url: "audio/elephant_2.mp3",
     can_simulate: true
   },
@@ -79,8 +86,10 @@ const HARDWARE_NODES = [
     node_id: "S03",
     sensor_name: "Deep Forest East",
     thai_zone: "ป่าลึกทิศตะวันออก · อุทยานแห่งชาติกุยบุรี",
+    en_zone: "Eastern Core Canopy · Kui Buri National Park",
     content_icon: "🪚",
     content_role: "ตรวจจับเสียงเลื่อยยนต์และขบวนการลักลอบตัดไม้",
+    content_role_en: "Anti-Poaching & Illegal Chainsaw Acoustic Detection",
     hardware_type: "ESP32 Canopy Acoustic Array",
     modalities: ["Audio", "Ultrasonic", "Temp", "Light"],
     protocol: "LoRaWAN → Cloud Run Gateway",
@@ -89,6 +98,7 @@ const HARDWARE_NODES = [
     location: { lat: 12.2, lng: 99.58 },
     telemetry: { temp_c: 25.9, humidity_rh: 82, light_lux: 420, ultrasonic_khz: 64.2 },
     last_sound: "🪚 เสียงเลื่อยโซ่ยนต์ตัดไม้ (AI 89%)",
+    last_sound_en: "🪚 Two-Stroke Chainsaw Signature (AI 89%)",
     audio_url: "audio/chainsaw_1.wav",
     can_simulate: true
   },
@@ -96,8 +106,10 @@ const HARDWARE_NODES = [
     node_id: "S04",
     sensor_name: "Stream Bank",
     thai_zone: "ริมลำธารธรรมชาติ · อุทยานแห่งชาติกุยบุรี",
+    en_zone: "Riparian Stream Corridor · Kui Buri National Park",
     content_icon: "🦗",
     content_role: "ตรวจวัดเสียงแมลงกลางคืนและความสมบูรณ์ระบบนิเวศ",
+    content_role_en: "Bio-Acoustic Biodiversity & Nocturnal Insect Baseline",
     hardware_type: "Riparian Bio-Acoustic + Lux Node",
     modalities: ["Audio", "Temp", "Humidity", "Light"],
     protocol: "LoRaWAN → Cloud Run Gateway",
@@ -106,6 +118,7 @@ const HARDWARE_NODES = [
     location: { lat: 12.12, lng: 99.5 },
     telemetry: { temp_c: 24.8, humidity_rh: 88, light_lux: 190, ultrasonic_khz: 58.9 },
     last_sound: "🦗 เสียงจิ้งหรีดและลำธารปกติ (AI 97%)",
+    last_sound_en: "🦗 Normal Crickets & Stream Baseline (AI 97%)",
     audio_url: "audio/crickets_1.wav",
     can_simulate: true
   },
@@ -113,8 +126,10 @@ const HARDWARE_NODES = [
     node_id: "CAM-05",
     sensor_name: "West Corridor TrailCam",
     thai_zone: "ด่านสัตว์ป่าทิศตะวันตก · อุทยานแห่งชาติกุยบุรี",
+    en_zone: "Western Wildlife Corridor · Kui Buri National Park",
     content_icon: "📷",
     content_role: "กล้องดักถ่ายสัตว์ป่า AI + เซนเซอร์วัดความชื้นเสี่ยงไฟป่า",
+    content_role_en: "Edge AI Camera Trap + Wildfire Microclimate Humidity Sensor",
     hardware_type: "Park Legacy CCTV + Edge AI Bridge",
     modalities: ["Image", "Thermal", "Temp", "Humidity"],
     protocol: "RTSP → Cloud Run Bridge",
@@ -123,6 +138,7 @@ const HARDWARE_NODES = [
     location: { lat: 12.15, lng: 99.49 },
     telemetry: { temp_c: 28.4, humidity_rh: 63, light_lux: 610, ultrasonic_khz: 31.0 },
     last_sound: "📷 กล้องดักถ่าย AI (แจ้งเตือนแบตเตอรี่ต่ำ 19%)",
+    last_sound_en: "📷 AI TrailCam (Low Battery Warning 19%)",
     audio_url: "audio/elephant_1.mp3",
     can_simulate: false
   },
@@ -130,8 +146,10 @@ const HARDWARE_NODES = [
     node_id: "ULT-06",
     sensor_name: "Canopy Ridge Bio-Sonar",
     thai_zone: "สันเขาเรือนยอดไม้ · อุทยานแห่งชาติกุยบุรี",
+    en_zone: "High-Mountain Canopy Ridge · Kui Buri National Park",
     content_icon: "🦇",
     content_role: "เรดาร์คลื่นอัลตราโซนิกตรวจวัดค้างคาวและชีวภาพป่า",
+    content_role_en: "192kHz Ultrasonic Bat Echolocation & Canopy Richness Array",
     hardware_type: "Ultrasonic 192kHz Bat & Insect Array",
     modalities: ["Ultrasonic", "Audio", "Temp", "Light"],
     protocol: "MQTT / TLS Satellite Backhaul",
@@ -140,6 +158,7 @@ const HARDWARE_NODES = [
     location: { lat: 12.18, lng: 99.6 },
     telemetry: { temp_c: 24.2, humidity_rh: 85, light_lux: 290, ultrasonic_khz: 96.4 },
     last_sound: "🦇 คลื่นโซนาร์ค้างคาวหนาแน่น (สมบูรณ์สูง)",
+    last_sound_en: "🦇 High Bat Echolocation Density (Rich Canopy)",
     audio_url: "audio/crickets_1.wav",
     can_simulate: false
   }
@@ -150,42 +169,52 @@ const THAILAND_NATIONAL_HUBS = [
   {
     hub_id: "TH-KY",
     name: "อุทยานแห่งชาติเขาใหญ่ ( จ.นครราชสีมา )",
+    name_en: "Khao Yai National Park (Nakhon Ratchasima)",
     icon: "🌳",
     lat: 14.438,
     lng: 101.372,
-    desc: "เครือข่ายเซนเซอร์เสียงช้างป่าและไม้พะยูง 12 โหนด · สถานะปกติ"
+    desc: "เครือข่ายเซนเซอร์เสียงช้างป่าและไม้พะยูง 12 โหนด · สถานะปกติ",
+    desc_en: "12 Siamese Rosewood & Wild Elephant Acoustic Nodes · Online"
   },
   {
     hub_id: "TH-HKK",
     name: "เขตรักษาพันธุ์สัตว์ป่าห้วยขาแข้ง ( จ.อุทัยธานี )",
+    name_en: "Huai Kha Khaeng Wildlife Sanctuary (Uthai Thani)",
     icon: "🐅",
     lat: 15.625,
     lng: 99.325,
-    desc: "มรดกโลกทางธรรมชาติ · เซนเซอร์ชีวอะคูสติกและกล้องดักถ่ายเสือโคร่ง 18 โหนด"
+    desc: "มรดกโลกทางธรรมชาติ · เซนเซอร์ชีวอะคูสติกและกล้องดักถ่ายเสือโคร่ง 18 โหนด",
+    desc_en: "UNESCO World Heritage · 18 Indochinese Tiger & Bio-Acoustic Nodes"
   },
   {
     hub_id: "TH-KKC",
     name: "อุทยานแห่งชาติแก่งกระจาน ( จ.เพชรบุรี )",
+    name_en: "Kaeng Krachan National Park (Phetchaburi)",
     icon: "🌿",
     lat: 12.885,
     lng: 99.632,
-    desc: "กลุ่มป่าแก่งกระจาน · เชื่อมต่อระบบเฝ้าระวังไฟป่าและสัตว์ป่า 9 โหนด"
+    desc: "กลุ่มป่าแก่งกระจาน · เชื่อมต่อระบบเฝ้าระวังไฟป่าและสัตว์ป่า 9 โหนด",
+    desc_en: "Kaeng Krachan Forest Complex · 9 Wildfire & Wildlife Nodes"
   },
   {
     hub_id: "TH-DOI",
     name: "อุทยานแห่งชาติดอยอินทนนท์ ( จ.เชียงใหม่ )",
+    name_en: "Doi Inthanon National Park (Chiang Mai)",
     icon: "🌲",
     lat: 18.588,
     lng: 98.486,
-    desc: "สถานีวิจัยความชื้นป่าต้นน้ำและเฝ้าระวังหมอกควัน/ไฟป่าภาคเหนือ"
+    desc: "สถานีวิจัยความชื้นป่าต้นน้ำและเฝ้าระวังหมอกควัน/ไฟป่าภาคเหนือ",
+    desc_en: "Upper-Watershed Cloud Forest & Northern Wildfire Research Hub"
   },
   {
     hub_id: "TH-KS",
     name: "อุทยานแห่งชาติเขาสก ( จ.สุราษฎร์ธานี )",
+    name_en: "Khao Sok National Park (Surat Thani)",
     icon: "🐘",
     lat: 8.915,
     lng: 98.527,
-    desc: "ป่าดิบชื้นภาคใต้ · เซนเซอร์วัดความหลากหลายทางเสียง (Bio-Acoustic Index)"
+    desc: "ป่าดิบชื้นภาคใต้ · เซนเซอร์วัดความหลากหลายทางเสียง (Bio-Acoustic Index)",
+    desc_en: "Southern Tropical Rainforest · Bio-Acoustic Biodiversity Array"
   }
 ];
 
@@ -283,6 +312,9 @@ const PREVIEW_INCIDENTS = [
 // ----------------------------------------------------------------------------
 const dom = {
   headerHomeLink: document.getElementById("headerHomeLink"),
+  btnLangToggle: document.getElementById("btnLangToggle"),
+  langToggleFlag: document.getElementById("langToggleFlag"),
+  langToggleLabel: document.getElementById("langToggleLabel"),
   btnThemeToggle: document.getElementById("btnThemeToggle"),
   themeToggleIcon: document.getElementById("themeToggleIcon"),
   connectionBadge: document.getElementById("connectionBadge"),
@@ -483,7 +515,7 @@ function showToast(message, options = {}) {
     const viewBtn = document.createElement("button");
     viewBtn.type = "button";
     viewBtn.className = "toast-action-btn";
-    viewBtn.textContent = "ดูรายละเอียด";
+    viewBtn.textContent = getCurrentLang() === "en" ? "View" : "ดูรายละเอียด";
     viewBtn.addEventListener("click", () => {
       openIncidentDetail(incidentId, true);
       toast.remove();
@@ -497,6 +529,75 @@ function showToast(message, options = {}) {
       toast.remove();
     }
   }, durationMs);
+}
+
+// ----------------------------------------------------------------------------
+// Bilingual Language Switcher (Thai 'th' / English 'en')
+// ----------------------------------------------------------------------------
+/**
+ * Initializes the Thai / English (`TH / EN`) language switcher in the header.
+ * - Restores the user's saved language preference from localStorage.
+ * - Updates all static `[data-i18n]` and `[data-i18n-placeholder]` DOM nodes.
+ * - Re-renders all dynamic UI sections (GIS telemetry card, sensor simulator
+ *   buttons, hardware registry table, live alert feed, and active detail view)
+ *   immediately when the user clicks `#btnLangToggle`.
+ */
+function initLanguageSwitcher() {
+  const applyLangState = (lang) => {
+    // 1. Update static DOM nodes via i18n module
+    setLanguage(lang);
+
+    // 2. Update header language toggle pill (Flag + TH/EN label)
+    const isEn = lang === "en";
+    if (dom.langToggleFlag) dom.langToggleFlag.textContent = isEn ? "🇬🇧" : "🇹🇭";
+    if (dom.langToggleLabel) dom.langToggleLabel.textContent = isEn ? "EN" : "TH";
+
+    // 3. Update map style & heatmap button labels according to active state
+    if (dom.mapStyleLabel) {
+      dom.mapStyleLabel.textContent = isSatelliteView
+        ? t("map_style_sat")
+        : t("map_style_clear");
+    }
+    if (dom.heatmapBtnLabel) {
+      dom.heatmapBtnLabel.textContent = heatmapVisible
+        ? t("heatmap_on")
+        : t("heatmap_off");
+    }
+    if (dom.btnToggleSimulate && dom.simulateBody) {
+      const isHidden = dom.simulateBody.classList.contains("hidden");
+      dom.btnToggleSimulate.textContent = isHidden
+        ? t("sim_btn_show")
+        : t("sim_btn_hide");
+    }
+
+    // 4. Re-render dynamic components in the newly selected language
+    renderSensorButtons();
+    const currentNode =
+      HARDWARE_NODES.find((n) => n.node_id === selectedMapNodeId) || HARDWARE_NODES[0];
+    renderSelectedNodeTelemetry(currentNode);
+    renderDeviceRegistryTable();
+    renderIncidentsList();
+    if (activeIncidentId) {
+      const activeInc = incidents.find((i) => i.id === activeIncidentId);
+      if (activeInc) renderIncidentDetailCard(activeInc);
+    }
+  };
+
+  // Apply initial language on startup
+  applyLangState(getCurrentLang());
+
+  // Toggle between 'th' and 'en' when the header button is clicked
+  if (dom.btnLangToggle) {
+    dom.btnLangToggle.addEventListener("click", () => {
+      const nextLang = getCurrentLang() === "th" ? "en" : "th";
+      applyLangState(nextLang);
+      showToast(
+        nextLang === "en"
+          ? "🇬🇧 Switched language to English (EN)"
+          : "🇹🇭 เปลี่ยนภาษาเป็น ภาษาไทย (TH) เรียบร้อยแล้ว"
+      );
+    });
+  }
 }
 
 // ----------------------------------------------------------------------------
@@ -543,7 +644,7 @@ function initLeafletGisMap() {
   thailandStreetTileLayer = L.tileLayer(
     "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
     {
-      attribution: "&copy; OpenStreetMap · แผนที่เครือข่ายอนุรักษ์ป่าไม้ประเทศไทย",
+      attribution: "&copy; OpenStreetMap · Thailand Forest Conservation GIS Network",
       maxZoom: 19
     }
   );
@@ -568,7 +669,7 @@ function initLeafletGisMap() {
       radius: 1700,
       color: "#dc2626",
       fillColor: "#dc2626",
-      label: "🐘 พื้นที่เสี่ยงช้างป่าออกนอกแนวเขต · ประตูกุยบุรีเหนือ"
+      label: "🐘 พื้นที่เสี่ยงช้างป่าออกนอกแนวเขต · Kui Buri North Gate"
     },
     {
       lat: 12.2,
@@ -576,7 +677,7 @@ function initLeafletGisMap() {
       radius: 1550,
       color: "#d97706",
       fillColor: "#d97706",
-      label: "🪚 พื้นที่เฝ้าระวังการลักลอบตัดไม้ · ป่าลึกทิศตะวันออก"
+      label: "🪚 พื้นที่เฝ้าระวังการลักลอบตัดไม้ · Deep Forest East"
     },
     {
       lat: 12.14,
@@ -584,7 +685,7 @@ function initLeafletGisMap() {
       radius: 1250,
       color: "#eab308",
       fillColor: "#eab308",
-      label: "🌾 แนวกันชนพื้นที่เกษตรกรรม · บ้านรวมไทย"
+      label: "🌾 แนวกันชนพื้นที่เกษตรกรรม · Ban Rai Farm Edge"
     }
   ];
 
@@ -602,12 +703,15 @@ function initLeafletGisMap() {
 
   // Render National Forest Hubs across Thailand (Khao Yai, Huai Kha Khaeng, Kaeng Krachan, Doi Inthanon, Khao Sok)
   nationalHubMarkers = THAILAND_NATIONAL_HUBS.map((hub) => {
+    const isEn = getCurrentLang() === "en";
+    const hubName = isEn ? hub.name_en || hub.name : hub.name;
+    const hubDesc = isEn ? hub.desc_en || hub.desc : hub.desc;
     const divIcon = L.divIcon({
       className: "custom-sensor-marker",
       html: `
         <div class="marker-pin-wrapper">
           <div class="marker-pin-circle marker-normal">${hub.icon}</div>
-          <span class="marker-pin-label">${escapeHtml(hub.name)}</span>
+          <span class="marker-pin-label">${escapeHtml(hubName)}</span>
         </div>
       `,
       iconSize: [180, 56],
@@ -616,8 +720,8 @@ function initLeafletGisMap() {
     const m = L.marker([hub.lat, hub.lng], { icon: divIcon }).addTo(leafletMap);
     m.bindPopup(
       `<div style="font-family: inherit; font-size: 12px;">
-        <strong>${hub.icon} ${escapeHtml(hub.name)}</strong><br/>
-        <span style="color:#475569;">${escapeHtml(hub.desc)}</span>
+        <strong>${hub.icon} ${escapeHtml(hubName)}</strong><br/>
+        <span style="color:#475569;">${escapeHtml(hubDesc)}</span>
       </div>`
     );
     return m;
@@ -644,11 +748,11 @@ function initLeafletGisMap() {
       if (isSatelliteView) {
         leafletMap.removeLayer(thailandStreetTileLayer);
         satelliteTileLayer.addTo(leafletMap);
-        if (dom.mapStyleLabel) dom.mapStyleLabel.textContent = "ภาพถ่ายดาวเทียม";
+        if (dom.mapStyleLabel) dom.mapStyleLabel.textContent = t("map_style_sat");
       } else {
         leafletMap.removeLayer(satelliteTileLayer);
         thailandStreetTileLayer.addTo(leafletMap);
-        if (dom.mapStyleLabel) dom.mapStyleLabel.textContent = "แผนที่ประเทศไทย (ชัดเจน)";
+        if (dom.mapStyleLabel) dom.mapStyleLabel.textContent = t("map_style_clear");
       }
     });
   }
@@ -661,8 +765,8 @@ function initLeafletGisMap() {
       dom.btnToggleHeatmap.setAttribute("aria-pressed", String(heatmapVisible));
       if (dom.heatmapBtnLabel) {
         dom.heatmapBtnLabel.textContent = heatmapVisible
-          ? "จุดเสี่ยง: เปิด"
-          : "จุดเสี่ยง: ปิด";
+          ? t("heatmap_on")
+          : t("heatmap_off");
       }
       heatmapCircleLayers.forEach((circle) => {
         if (heatmapVisible) {
@@ -748,13 +852,23 @@ function focusMapOnNode(nodeId) {
 
 function renderSelectedNodeTelemetry(node) {
   if (!dom.gisNodeTelemetryCard || !node) return;
+  const isEn = getCurrentLang() === "en";
+  const zoneLabel = isEn ? node.en_zone || node.thai_zone : node.thai_zone;
+  const roleLabel = isEn ? node.content_role_en || node.content_role : node.content_role;
+  const soundLabel = isEn ? node.last_sound_en || node.last_sound : node.last_sound;
 
   const statusBadgeHtml =
     node.status === "alert"
-      ? `<span class="px-2.5 py-0.5 text-[11px] font-bold rounded-full bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-800">🟠 แจ้งเตือนภัยคุกคาม</span>`
+      ? `<span class="px-2.5 py-0.5 text-[11px] font-bold rounded-full bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-800">${escapeHtml(
+          t("node_status_alert")
+        )}</span>`
       : node.status === "lowbat"
-      ? `<span class="px-2.5 py-0.5 text-[11px] font-bold rounded-full bg-red-100 dark:bg-red-950 text-red-700 dark:text-red-300 border border-red-300 dark:border-red-800">🔴 แบตเตอรี่ต่ำ (${node.battery}%)</span>`
-      : `<span class="px-2.5 py-0.5 text-[11px] font-bold rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800">🟢 ทำงานปกติ (${node.battery}%)</span>`;
+      ? `<span class="px-2.5 py-0.5 text-[11px] font-bold rounded-full bg-red-100 dark:bg-red-950 text-red-700 dark:text-red-300 border border-red-300 dark:border-red-800">${escapeHtml(
+          t("node_status_lowbat")
+        )} (${node.battery}%)</span>`
+      : `<span class="px-2.5 py-0.5 text-[11px] font-bold rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800">${escapeHtml(
+          t("node_status_normal")
+        )} (${node.battery}%)</span>`;
 
   dom.gisNodeTelemetryCard.innerHTML = `
     <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
@@ -772,7 +886,7 @@ function renderSelectedNodeTelemetry(node) {
             )}</strong>
           </div>
           <span class="text-[11px] text-slate-500 dark:text-slate-400">${escapeHtml(
-            node.thai_zone || ""
+            zoneLabel || ""
           )} · GPS ${node.location.lat.toFixed(2)}°N, ${node.location.lng.toFixed(
     2
   )}°E</span>
@@ -782,34 +896,42 @@ function renderSelectedNodeTelemetry(node) {
     </div>
 
     <div class="text-xs text-slate-600 dark:text-slate-400 mb-3">
-      หน้าที่หลัก: <strong class="text-slate-800 dark:text-slate-200">${escapeHtml(
-        node.content_role || node.hardware_type
-      )}</strong> · อุปกรณ์: <span class="text-[#143328] dark:text-emerald-400 font-semibold">${escapeHtml(
+      ${escapeHtml(t("node_role_label"))} <strong class="text-slate-800 dark:text-slate-200">${escapeHtml(
+    roleLabel || node.hardware_type
+  )}</strong> · ${escapeHtml(t("node_hw_label"))} <span class="text-[#143328] dark:text-emerald-400 font-semibold">${escapeHtml(
     node.hardware_type
   )}</span>
     </div>
 
     <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-3 text-center mb-3">
       <div>
-        <span class="block text-[10px] font-bold uppercase tracking-wider text-slate-400">🌡️ อุณหภูมิ (Temp)</span>
+        <span class="block text-[10px] font-bold uppercase tracking-wider text-slate-400">${escapeHtml(
+          t("node_temp_label")
+        )}</span>
         <strong class="text-sm font-extrabold text-slate-900 dark:text-white">${
           node.telemetry.temp_c
         }°C</strong>
       </div>
       <div>
-        <span class="block text-[10px] font-bold uppercase tracking-wider text-slate-400">💧 ความชื้น (RH)</span>
+        <span class="block text-[10px] font-bold uppercase tracking-wider text-slate-400">${escapeHtml(
+          t("node_rh_label")
+        )}</span>
         <strong class="text-sm font-extrabold text-sky-600 dark:text-sky-400">${
           node.telemetry.humidity_rh
         }% RH</strong>
       </div>
       <div>
-        <span class="block text-[10px] font-bold uppercase tracking-wider text-slate-400">☀️ ความเข้มแสง</span>
+        <span class="block text-[10px] font-bold uppercase tracking-wider text-slate-400">${escapeHtml(
+          t("node_lux_label")
+        )}</span>
         <strong class="text-sm font-extrabold text-amber-600 dark:text-amber-400">${
           node.telemetry.light_lux
         } Lux</strong>
       </div>
       <div>
-        <span class="block text-[10px] font-bold uppercase tracking-wider text-slate-400">🦇 อัลตราโซนิก</span>
+        <span class="block text-[10px] font-bold uppercase tracking-wider text-slate-400">${escapeHtml(
+          t("node_ultra_label")
+        )}</span>
         <strong class="text-sm font-extrabold text-purple-600 dark:text-purple-400">${
           node.telemetry.ultrasonic_khz
         } kHz</strong>
@@ -817,17 +939,19 @@ function renderSelectedNodeTelemetry(node) {
     </div>
 
     <div class="flex flex-wrap items-center justify-between gap-2 text-xs">
-      <span class="text-slate-600 dark:text-slate-300">สถานะเสียงล่าสุด: <strong class="text-[#143328] dark:text-emerald-400">${escapeHtml(
-        node.last_sound
-      )}</strong></span>
+      <span class="text-slate-600 dark:text-slate-300">${escapeHtml(
+        t("node_last_sound")
+      )} <strong class="text-[#143328] dark:text-emerald-400">${escapeHtml(
+    soundLabel
+  )}</strong></span>
       <div class="flex items-center gap-2">
         <button type="button" id="btnMapPlayAudio" class="px-3 py-1.5 rounded-lg bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-700 text-xs font-bold transition">
-          ▶ ฟังเสียงจากเซนเซอร์
+          ${escapeHtml(t("btn_listen_sensor"))}
         </button>
         ${
           node.can_simulate
             ? `<button type="button" id="btnMapTriggerNode" class="px-3 py-1.5 rounded-lg bg-[#143328] hover:bg-[#1B4332] dark:bg-emerald-600 text-white text-xs font-bold shadow-2xs transition">
-                ⚡ ส่งให้ Gemini วิเคราะห์
+                ${escapeHtml(t("btn_trigger_gemini"))}
               </button>`
             : ""
         }
@@ -839,7 +963,11 @@ function renderSelectedNodeTelemetry(node) {
   if (playBtn) {
     playBtn.addEventListener("click", () => {
       playAudioClipOutLoud(node.audio_url);
-      showToast(`กำลังเล่นเสียงจริงจากโหนด ${node.node_id} (${node.sensor_name})`);
+      showToast(
+        isEn
+          ? `Playing live sensor audio from ${node.node_id} (${node.sensor_name})`
+          : `กำลังเล่นเสียงจริงจากโหนด ${node.node_id} (${node.sensor_name})`
+      );
     });
   }
 
@@ -860,6 +988,7 @@ function renderSelectedNodeTelemetry(node) {
 function renderDeviceRegistryTable() {
   if (!dom.deviceRegistryTableBody) return;
   dom.deviceRegistryTableBody.innerHTML = "";
+  const isEn = getCurrentLang() === "en";
 
   for (const node of HARDWARE_NODES) {
     const tr = document.createElement("tr");
@@ -868,10 +997,16 @@ function renderDeviceRegistryTable() {
 
     const statusBadge =
       node.status === "alert"
-        ? `<span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-800">🟠 แจ้งเตือน</span>`
+        ? `<span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-800">${escapeHtml(
+            t("node_status_alert")
+          )}</span>`
         : node.status === "lowbat"
-        ? `<span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-red-100 dark:bg-red-950 text-red-700 dark:text-red-300 border border-red-300 dark:border-red-800">🔴 แบตต่ำ</span>`
-        : `<span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800">🟢 ออนไลน์</span>`;
+        ? `<span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-red-100 dark:bg-red-950 text-red-700 dark:text-red-300 border border-red-300 dark:border-red-800">${escapeHtml(
+            t("node_status_lowbat")
+          )}</span>`
+        : `<span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800">${escapeHtml(
+            t("node_status_normal")
+          )}</span>`;
 
     const batteryColor =
       node.battery < 30
@@ -889,6 +1024,8 @@ function renderDeviceRegistryTable() {
       )
       .join(" ");
 
+    const zoneText = isEn ? node.en_zone || node.thai_zone : node.thai_zone;
+
     tr.innerHTML = `
       <td class="py-3.5 px-4">
         <div class="font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
@@ -896,7 +1033,7 @@ function renderDeviceRegistryTable() {
           <span>${escapeHtml(node.node_id)} · ${escapeHtml(node.sensor_name)}</span>
         </div>
         <div class="text-[11px] text-slate-500 dark:text-slate-400">${escapeHtml(
-          node.thai_zone || ""
+          zoneText || ""
         )}</div>
       </td>
       <td class="py-3.5 px-4 text-slate-700 dark:text-slate-200 font-medium">${escapeHtml(
@@ -921,12 +1058,12 @@ function renderDeviceRegistryTable() {
             ? `<button type="button" class="btn-table-simulate px-3 py-1.5 rounded-lg bg-[#143328] hover:bg-[#1B4332] text-white font-bold text-xs transition shadow-2xs" data-sensor-id="${escapeHtml(
                 node.node_id
               )}">
-                ⚡ ทดสอบส่งเสียง
+                ${escapeHtml(t("tbl_btn_sim"))}
               </button>`
             : `<button type="button" class="btn-table-focus px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 font-semibold text-xs transition" data-node-id="${escapeHtml(
                 node.node_id
               )}">
-                🗺️ ดูบนแผนที่
+                ${escapeHtml(t("tbl_btn_map"))}
               </button>`
         }
       </td>
@@ -1141,14 +1278,25 @@ function exportJsonDataset() {
 }
 
 // ----------------------------------------------------------------------------
-// SECTION 5: Blimbloom AI Assistant (Gemini Ecosystem Chat)
+// SECTION 5: Blimbloom AI Assistant (Bilingual Gemini Ecosystem Chat)
 // ----------------------------------------------------------------------------
+/**
+ * Generates a localized Thai or English Ecosystem Big Data insight based on
+ * the currently selected language (`getCurrentLang()`).
+ */
 function generateGeminiEcosystemAnswer(questionText) {
   const q = (questionText || "").toLowerCase();
+  const isEn = getCurrentLang() === "en";
   const elephantList = incidents.filter((i) => i.event_type === "elephant");
   const chainsawList = incidents.filter((i) => i.event_type === "chainsaw");
 
   if (q.includes("ช้าง") || q.includes("elephant")) {
+    if (isEn) {
+      return `🐘 <strong>Wild Elephant Intrusion Summary (Live Firestore + Multi-Sensor):</strong><br/>
+• Detected <strong>${elephantList.length} elephant vocalization events</strong> (Avg AI confidence: <strong>94%</strong>)<br/>
+• <strong>Highest Risk Sectors:</strong> <code>S01 Kui Buri North Gate</code> and <code>S02 Ban Rai Farm Edge</code> between 19:00–23:30 when relative humidity drops below 75% RH.<br/>
+• <strong>Recommended Action:</strong> Deploy rapid-response rangers to North Gate and notify Moo 4 village headman immediately.`;
+    }
     return `🐘 <strong>สรุปเหตุการณ์ช้างป่าบุกรุก (ข้อมูลสดจาก Firestore + Multi-Sensor):</strong><br/>
 • ปัจจุบันตรวจพบสัญญาณเสียงช้างป่าทั้งหมด <strong>${elephantList.length} ครั้ง</strong> (ความมั่นใจเฉลี่ย <strong>94%</strong>)<br/>
 • <strong>จุดเสี่ยงสูงสุด:</strong> <code>S01 Kui Buri North Gate</code> และ <code>S02 Ban Rai Farm Edge</code> โดยเฉพาะช่วงเวลา 19:00–23:30 น. เมื่อความชื้นในป่าลดต่ำกว่า 75% RH<br/>
@@ -1156,16 +1304,34 @@ function generateGeminiEcosystemAnswer(questionText) {
   }
 
   if (q.includes("ความชื้น") || q.includes("ไฟป่า") || q.includes("fire") || q.includes("humidity")) {
+    if (isEn) {
+      return `🔥 <strong>Low-Humidity & Wildfire Risk Forecast (7-Day Microclimate Model):</strong><br/>
+• Multi-sensor fusion shows <strong><code>CAM-05 West Corridor</code> (28.4°C, 63% RH, 610 Lux)</strong> and <strong><code>S02 Ban Rai Farm Edge</code> (27.8°C, 71% RH)</strong> have the lowest relative humidity.<br/>
+• <strong>7-Day Outlook:</strong> 34% elevated dry-fuel risk in the western corridor. Recommend clearing firebreaks and replacing battery on <code>CAM-05</code> (currently 19%).`;
+    }
     return `🔥 <strong>วิเคราะห์ความเสี่ยงความชื้นต่ำและไฟป่า (7-Day Microclimate Forecast):</strong><br/>
 • จากการหลอมรวมข้อมูลอุณหภูมิ + ความชื้น + ความเข้มแสง พบว่าจุด <strong><code>CAM-05 West Corridor</code> (28.4°C, ความชื้น 63% RH, แสง 610 Lux)</strong> และ <strong><code>S02 Ban Rai Farm Edge</code> (27.8°C, 71% RH)</strong> มีค่าความชื้นสัมพัทธ์ต่ำสุดในพื้นที่<br/>
 • <strong>แนวโน้มสัปดาห์หน้า:</strong> มีโอกาสเกิดจุดความร้อนสะสมสูงขึ้น 34% แนะนำให้จัดทำแนวกันไฟและเปลี่ยนแบตเตอรี่ของโหนด <code>CAM-05</code> (เหลือ 19%) ครับ`;
   }
 
   if (q.includes("เลื่อยยนต์") || q.includes("ตำรวจ") || q.includes("report") || q.includes("chainsaw") || q.includes("ตัดไม้")) {
+    if (isEn) {
+      return `🪚 <strong>Chainsaw Acoustic Evidence Report (For Forestry Police & DNP):</strong><br/>
+• <strong>Total Incidents:</strong> ${chainsawList.length} event(s) (<span class="text-red-600 dark:text-red-400 font-bold">HIGH PRIORITY</span>)<br/>
+• <strong>GPS Coordinates:</strong> Node <code>S03 Deep Forest East</code> (LAT 12.2000°N, LNG 99.5800°E)<br/>
+• <strong>Gemini AI Forensics:</strong> High-RPM two-stroke chainsaw engine harmonics confirmed (Confidence 89%) with attached WAV audio evidence. Click <strong>Export Dataset (CSV)</strong> to attach to the official investigation report.`;
+    }
     return `🪚 <strong>รายงานหลักฐานการตรวจจับเสียงเลื่อยยนต์ (สำหรับส่งตำรวจป่าไม้และกรมอุทยานฯ):</strong><br/>
 • <strong>จำนวนเหตุการณ์:</strong> ${chainsawList.length} รายการ (ระดับความเร่งด่วน: <span class="text-red-600 dark:text-red-400 font-bold">HIGH PRIORITY</span>)<br/>
 • <strong>พิกัดเกิดเหตุ:</strong> โหนด <code>S03 Deep Forest East</code> (LAT 12.2000°N, LNG 99.5800°E)<br/>
 • <strong>ผลวิเคราะห์จาก Gemini AI:</strong> ตรวจพบคลื่นความถี่เครื่องยนต์ 2 จังหวะรอบสูงตรงกับเลื่อยโซ่ยนต์ (Confidence 89%) พร้อมไฟล์เสียงหลักฐานแนบในระบบ สามารถกดปุ่ม <strong>ดาวน์โหลด Dataset (CSV)</strong> เพื่อแนบเป็นหลักฐานดำเนินคดีได้ทันทีครับ`;
+  }
+
+  if (isEn) {
+    return `✨ <strong>Blimbloom Gemini Ecosystem Insight:</strong><br/>
+Across all 6 multimodal streams (Audio, Image, Ultrasonic, Temp, RH, Light), there are currently <strong>${incidents.length} recorded events</strong> (${
+      incidents.filter((i) => i.urgency === "high").length
+    } high-priority). The Forest Integrity Score stands at <strong>94.2/100 (142,850 tCO₂e protected)</strong>. Ask me about <em>elephants</em>, <em>chainsaw enforcement</em>, or <em>wildfire humidity risk</em>!`;
   }
 
   return `✨ <strong>Blimbloom Gemini Ecosystem Insight:</strong><br/>
@@ -1202,12 +1368,13 @@ function initAiAssistantChat() {
 
   document.querySelectorAll(".ai-prompt-chip").forEach((chip) => {
     chip.addEventListener("click", () => {
-      const promptText = chip.dataset.prompt;
-      if (!promptText) return;
+      const promptKey = chip.dataset.prompt;
+      const visibleLabel = chip.textContent.trim();
+      if (!promptKey) return;
       dom.aiChatPanel.classList.remove("hidden");
-      appendAiChatMessage("user", promptText);
+      appendAiChatMessage("user", visibleLabel);
       setTimeout(() => {
-        appendAiChatMessage("bot", generateGeminiEcosystemAnswer(promptText));
+        appendAiChatMessage("bot", generateGeminiEcosystemAnswer(promptKey));
       }, 350);
     });
   });
@@ -1325,17 +1492,19 @@ async function handleEnableAlertsTap() {
     if (permission !== "granted") {
       showToast("Notification permission was not granted.");
       dom.btnEnableAlerts.disabled = false;
-      dom.btnEnableAlerts.textContent = "Enable alerts";
+      dom.btnEnableAlerts.textContent = t("btn_enable_alerts");
       updatePushButtonState();
       return;
     }
 
     if (!isConfigReady() || !isVapidReady()) {
       showToast(
-        "อนุญาตการแจ้งเตือนสำเร็จ! สามารถใส่ FIREBASE_CONFIG และ VAPID_KEY ใน public/js/config.js เพื่อเชื่อม FCM จริง"
+        getCurrentLang() === "en"
+          ? "Notification permission granted! Add FIREBASE_CONFIG & VAPID_KEY in .env to enable live FCM."
+          : "อนุญาตการแจ้งเตือนสำเร็จ! สามารถใส่ FIREBASE_CONFIG และ VAPID_KEY ใน .env เพื่อเชื่อม FCM จริง"
       );
       dom.btnEnableAlerts.disabled = false;
-      dom.btnEnableAlerts.textContent = "Enable alerts";
+      dom.btnEnableAlerts.textContent = t("btn_enable_alerts");
       return;
     }
 
@@ -1386,7 +1555,7 @@ async function handleEnableAlertsTap() {
     console.error("[Push] Error enabling alerts:", err);
     showToast(`Could not enable push alerts: ${err.message}`);
     dom.btnEnableAlerts.disabled = false;
-    dom.btnEnableAlerts.textContent = "Enable alerts";
+    dom.btnEnableAlerts.textContent = t("btn_enable_alerts");
   }
 }
 
@@ -1410,9 +1579,9 @@ function renderSensorButtons() {
           <span class="sensor-id-tag">${escapeHtml(sensor.sensor_id)}</span>
           <span class="sensor-name-text">${escapeHtml(sensor.sensor_name)}</span>
         </div>
-        <span class="sensor-clip-hint">${escapeHtml(sensor.expected_label)} · เสียงจริง (${escapeHtml(
-      sensor.audio_url.split("/").pop()
-    )})</span>
+        <span class="sensor-clip-hint">${escapeHtml(sensor.expected_label)} · ${escapeHtml(
+      t("sim_real_audio_tag")
+    )} (${escapeHtml(sensor.audio_url.split("/").pop())})</span>
       </div>
     `;
 
@@ -1429,7 +1598,10 @@ function setSimulationLoadingState(loading, sensor = null) {
   });
 
   if (loading && sensor) {
-    dom.simulateStatusText.textContent = `กำลังส่งไฟล์เสียงจริงจาก ${sensor.sensor_id} (${sensor.sensor_name}) ไปยัง Cloud Run & Gemini AI...`;
+    dom.simulateStatusText.textContent =
+      getCurrentLang() === "en"
+        ? `Streaming real field audio from ${sensor.sensor_id} (${sensor.sensor_name}) to Cloud Run & Gemini AI...`
+        : `กำลังส่งไฟล์เสียงจริงจาก ${sensor.sensor_id} (${sensor.sensor_name}) ไปยัง Cloud Run & Gemini AI...`;
     dom.simulateStatusBox.classList.remove("hidden");
     dom.simulateErrorBox.classList.add("hidden");
   } else {
@@ -1462,9 +1634,13 @@ async function handleSimulateSensor(sensor) {
         knownIncidentIds.add(previewDoc.id);
         renderIncidentsList(previewDoc.id);
         showToast(
-          `✨ Gemini วิเคราะห์สำเร็จ: ${previewDoc.event_type.toUpperCase()} (ความมั่นใจ ${Math.round(
-            previewDoc.confidence * 100
-          )}% · ระดับ ${previewDoc.urgency.toUpperCase()})`,
+          getCurrentLang() === "en"
+            ? `✨ Gemini Analysis Complete: ${previewDoc.event_type.toUpperCase()} (${Math.round(
+                previewDoc.confidence * 100
+              )}% conf · ${previewDoc.urgency.toUpperCase()})`
+            : `✨ Gemini วิเคราะห์สำเร็จ: ${previewDoc.event_type.toUpperCase()} (ความมั่นใจ ${Math.round(
+                previewDoc.confidence * 100
+              )}% · ระดับ ${previewDoc.urgency.toUpperCase()})`,
           {
             urgency: previewDoc.urgency,
             incidentId: previewDoc.id
@@ -1600,6 +1776,7 @@ function updateFilterCountsAndKpis() {
 function renderIncidentsList(newlyAddedId = null) {
   dom.incidentsLoading.classList.add("hidden");
   updateFilterCountsAndKpis();
+  const isEn = getCurrentLang() === "en";
 
   const filtered = getFilteredIncidents();
   dom.incidentCountBadge.textContent = String(filtered.length);
@@ -1628,6 +1805,8 @@ function renderIncidentsList(newlyAddedId = null) {
     const previewTextEn =
       inc.alert_message_en || inc.reasoning || "Acoustic event recorded.";
     const previewTextTh = inc.alert_message_th || "";
+    const primaryAlert = isEn ? previewTextEn : previewTextTh || previewTextEn;
+    const secondaryAlert = isEn ? previewTextTh : previewTextEn;
 
     row.innerHTML = `
       <div class="row-top">
@@ -1655,29 +1834,29 @@ function renderIncidentsList(newlyAddedId = null) {
         }">${escapeHtml(formatRelativeTime(inc.created_at))}</span>
       </div>
 
+      <p class="row-preview font-semibold">${escapeHtml(primaryAlert)}</p>
       ${
-        previewTextTh
-          ? `<p class="row-preview font-semibold">${escapeHtml(previewTextTh)}</p>`
+        secondaryAlert && secondaryAlert !== primaryAlert
+          ? `<p class="row-preview-th">${escapeHtml(secondaryAlert)}</p>`
           : ""
       }
-      <p class="row-preview-th">${escapeHtml(previewTextEn)}</p>
 
       <div class="row-actions-bar">
         <button type="button" class="btn-inline-audio px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 text-xs font-semibold transition">
-          ▶ ฟังเสียงหลักฐาน
+          ${escapeHtml(t("btn_evidence_audio"))}
         </button>
         <div class="flex items-center gap-1.5">
           ${
             statusKey === "new"
               ? `<button type="button" class="btn-inline-ack px-3 py-1 rounded-lg bg-[#143328] hover:bg-[#1B4332] dark:bg-emerald-600 text-white text-xs font-bold transition shadow-2xs">
-                  ✓ รับทราบเหตุ (Ack)
+                  ${escapeHtml(t("btn_ack_short"))}
                 </button>`
               : `<span class="text-xs text-[#143328] dark:text-emerald-400 font-bold">✓ ${escapeHtml(
                   formatStatusLabel(statusKey)
                 )}</span>`
           }
           <button type="button" class="btn-inline-detail px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 text-xs font-semibold transition">
-            รายละเอียด →
+            ${escapeHtml(t("btn_details"))}
           </button>
         </div>
       </div>
@@ -1689,7 +1868,11 @@ function renderIncidentsList(newlyAddedId = null) {
       audioBtn.addEventListener("click", (e) => {
         e.stopPropagation();
         playAudioClipOutLoud(inc.audio_url);
-        showToast(`กำลังเล่นเสียงหลักฐาน: ${inc.audio_url}`);
+        showToast(
+          isEn
+            ? `Playing evidence audio: ${inc.audio_url}`
+            : `กำลังเล่นเสียงหลักฐาน: ${inc.audio_url}`
+        );
       });
     }
 
@@ -1801,13 +1984,13 @@ function renderIncidentDetailCard(inc) {
 
       <div class="detail-meta-grid">
         <div class="meta-item">
-          <span class="meta-label">Sensor Station</span>
+          <span class="meta-label">${escapeHtml(t("detail_station"))}</span>
           <span class="meta-value">${escapeHtml(
             inc.sensor_id ? `${inc.sensor_id} · ` : ""
           )}${escapeHtml(inc.sensor_name || "Unknown Sensor")}</span>
         </div>
         <div class="meta-item">
-          <span class="meta-label">Detected Time</span>
+          <span class="meta-label">${escapeHtml(t("detail_time"))}</span>
           <span class="meta-value">${escapeHtml(
             formatRelativeTime(inc.created_at)
           )}</span>
@@ -1816,13 +1999,15 @@ function renderIncidentDetailCard(inc) {
           )}</span>
         </div>
         <div class="meta-item" style="grid-column: 1 / -1;">
-          <span class="meta-label">GPS Coordinates</span>
+          <span class="meta-label">${escapeHtml(t("detail_gps"))}</span>
           <span class="meta-value">${escapeHtml(coordsText)}</span>
           ${
             mapsUrl
               ? `<a class="map-link" href="${escapeHtml(
                   mapsUrl
-                )}" target="_blank" rel="noopener noreferrer">📍 เปิดดูพิกัดใน Google Maps ↗</a>`
+                )}" target="_blank" rel="noopener noreferrer">${escapeHtml(
+                  t("detail_open_maps")
+                )}</a>`
               : ""
           }
         </div>
@@ -1831,13 +2016,13 @@ function renderIncidentDetailCard(inc) {
 
     <div class="alert-messages-box">
       <div class="alert-box-primary">
-        <span class="box-caption">ข้อความแจ้งเตือนเจ้าหน้าที่ (ภาษาไทย)</span>
+        <span class="box-caption">${escapeHtml(t("detail_alert_th_label"))}</span>
         <p class="alert-text-en">${escapeHtml(
           inc.alert_message_th || "ไม่มีข้อความแจ้งเตือนภาษาไทย"
         )}</p>
       </div>
       <div class="alert-box-secondary">
-        <span class="box-caption">Ranger Alert (English)</span>
+        <span class="box-caption">${escapeHtml(t("detail_alert_en_label"))}</span>
         <p class="alert-text-th">${escapeHtml(
           inc.alert_message_en || "No English alert message provided."
         )}</p>
@@ -1845,9 +2030,9 @@ function renderIncidentDetailCard(inc) {
     </div>
 
     <div class="audio-section">
-      <span class="box-caption">ไฟล์เสียงที่บันทึกได้จากเซนเซอร์ (${escapeHtml(
-        inc.audio_url || "N/A"
-      )})</span>
+      <span class="box-caption">${escapeHtml(t("detail_audio_label"))} (${escapeHtml(
+    inc.audio_url || "N/A"
+  )})</span>
       ${
         audioSrc
           ? `<audio class="audio-player" controls preload="metadata" src="${escapeHtml(
@@ -1859,14 +2044,16 @@ function renderIncidentDetailCard(inc) {
 
     <div class="analysis-section">
       <div class="confidence-row">
-        <span class="box-caption" style="margin: 0;">ผลวิเคราะห์คลื่นเสียงด้วย Gemini AI · ความมั่นใจ (Confidence)</span>
+        <span class="box-caption" style="margin: 0;">${escapeHtml(
+          t("detail_conf_label")
+        )}</span>
         <span class="confidence-pct">${confidencePct}%</span>
       </div>
       <div class="confidence-bar-track" aria-hidden="true">
         <div class="confidence-bar-fill" style="width: ${confidencePct}%;"></div>
       </div>
       <div>
-        <span class="box-caption">เหตุผลประกอบการตัดสินใจของ AI (AI Reasoning)</span>
+        <span class="box-caption">${escapeHtml(t("detail_reasoning_label"))}</span>
         <p class="reasoning-text">${escapeHtml(
           inc.reasoning || "No reasoning provided."
         )}</p>
@@ -1874,22 +2061,22 @@ function renderIncidentDetailCard(inc) {
     </div>
 
     <div class="status-actions-section">
-      <span class="box-caption">อัปเดตสถานะการปฏิบัติงานของเจ้าหน้าที่ (Update Ranger Status)</span>
+      <span class="box-caption">${escapeHtml(t("detail_status_heading"))}</span>
       <div class="status-buttons-grid">
         <button type="button" class="btn btn-status ${
           statusKey === "acknowledged" ? "active-status" : ""
         }" data-status="acknowledged">
-          ✓ Acknowledge (รับทราบ)
+          ${escapeHtml(t("status_btn_ack"))}
         </button>
         <button type="button" class="btn btn-status ${
           statusKey === "en_route" ? "active-status" : ""
         }" data-status="en_route">
-          🏃 On the way (กำลังเข้าพื้นที่)
+          ${escapeHtml(t("status_btn_enroute"))}
         </button>
         <button type="button" class="btn btn-status ${
           statusKey === "resolved" ? "active-status" : ""
         }" data-status="resolved">
-          🛡️ Resolved (ระงับเหตุแล้ว)
+          ${escapeHtml(t("status_btn_resolved"))}
         </button>
       </div>
       <div id="statusUpdateError" class="error-banner hidden" role="alert"></div>
@@ -1923,7 +2110,11 @@ async function handleUpdateIncidentStatus(incidentId, newStatus) {
           renderIncidentDetailCard(target);
         }
         renderIncidentsList();
-        showToast(`อัปเดตสถานะเป็น "${formatStatusLabel(newStatus)}" เรียบร้อยแล้ว`);
+        showToast(
+          getCurrentLang() === "en"
+            ? `Updated ranger status to "${formatStatusLabel(newStatus)}"`
+            : `อัปเดตสถานะเป็น "${formatStatusLabel(newStatus)}" เรียบร้อยแล้ว`
+        );
       }
       return;
     }
@@ -1942,7 +2133,11 @@ async function handleUpdateIncidentStatus(incidentId, newStatus) {
       }
       renderIncidentsList();
     }
-    showToast(`อัปเดตสถานะเป็น "${formatStatusLabel(newStatus)}" เรียบร้อยแล้ว`);
+    showToast(
+      getCurrentLang() === "en"
+        ? `Updated ranger status to "${formatStatusLabel(newStatus)}"`
+        : `อัปเดตสถานะเป็น "${formatStatusLabel(newStatus)}" เรียบร้อยแล้ว`
+    );
   } catch (err) {
     console.error("[Status Update] Failed:", err);
     if (errBox) {
@@ -2144,11 +2339,14 @@ function initApp() {
   initInstallAndPushFlow();
   initSectionViewSwitcher();
   initFirestoreConnection();
+  initLanguageSwitcher();
 
   if (dom.btnToggleSimulate && dom.simulateBody) {
     dom.btnToggleSimulate.addEventListener("click", () => {
       const isHidden = dom.simulateBody.classList.toggle("hidden");
-      dom.btnToggleSimulate.textContent = isHidden ? "กางออก ▼" : "พับเก็บ ▲";
+      dom.btnToggleSimulate.textContent = isHidden
+        ? t("sim_btn_show")
+        : t("sim_btn_hide");
     });
   }
 
@@ -2156,7 +2354,7 @@ function initApp() {
     dom.btnOpenSimulatorModal.addEventListener("click", () => {
       dom.simulatorDrawer.classList.remove("hidden");
       dom.simulateBody?.classList.remove("hidden");
-      if (dom.btnToggleSimulate) dom.btnToggleSimulate.textContent = "พับเก็บ ▲";
+      if (dom.btnToggleSimulate) dom.btnToggleSimulate.textContent = t("sim_btn_hide");
       dom.simulatorDrawer.scrollIntoView({ behavior: "smooth" });
     });
   }
