@@ -1,0 +1,15 @@
+# Dependencies & OS files
+node_modules/
+.DS_Store
+Webapp.zip
+
+# Environment & secrets (never commit raw API keys)
+.env
+.env.*
+!.env.example
+
+# Firebase cache/logs
+.firebase/
+firebase-debug.log
+firestore-debug.log
+ui-debug.log

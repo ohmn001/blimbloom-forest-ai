@@ -1,0 +1,20 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Incidents: Public read, created only by Cloud Run Admin SDK,
+    // client may only update the 'status' field to acknowledged/en_route/resolved.
+    match /incidents/{id} {
+      allow read: if true;
+      allow create: if false; // only Cloud Run (Admin SDK) creates
+      allow update: if request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])
+                    && request.resource.data.status in ['acknowledged', 'en_route', 'resolved'];
+      allow delete: if false;
+    }
+
+    // Subscribers: Client can register FCM token, only Cloud Run Admin SDK reads tokens.
+    match /subscribers/{token} {
+      allow create: if true;
+      allow read, update, delete: if false;
+    }
+  }
+}

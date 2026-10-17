@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#143328" />
+  <meta name="description" content="BLIMBLOOM — Protect & Amplify · Thailand Forest Ecosystem AI & Early Warning Platform" />
+
+  <!-- iOS PWA Meta Tags -->
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Blimbloom" />
+  <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png" />
+
+  <!-- Web App Manifest & Favicon -->
+  <link rel="manifest" href="./manifest.json" />
+  <link rel="icon" type="image/png" sizes="192x192" href="./icons/blimbloom-emblem.png" />
+
+  <title>BLIMBLOOM · Protect &amp; Amplify | ระบบเฝ้าระวังและฐานข้อมูลนิเวศป่าไม้ด้วย AI</title>
+
+  <!-- Google Fonts: Inter & Noto Sans Thai -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+  <!-- Leaflet GIS Map CSS & JS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              900: '#102820',
+              800: '#143328',
+              700: '#1B4332',
+              600: '#2D6A4F',
+              500: '#40916C',
+              100: '#E8F3EE',
+              50: '#F3F8F5'
+            },
+            earth: {
+              500: '#C87D4B',
+              600: '#B06738'
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'Noto Sans Thai', '-apple-system', 'BlinkMacSystemFont', 'sans-serif']
+          }
+        }
+      }
+    };
+  </script>
+
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body class="bg-[#F6F7F5] dark:bg-slate-950 text-slate-800 dark:text-slate-100 font-sans antialiased min-h-screen flex flex-col transition-colors duration-200">
+
+  <!-- ==================== OFFICIAL ENTERPRISE HEADER ==================== -->
+  <header class="sticky top-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200/90 dark:border-slate-800 shadow-xs">
+    <div class="max-w-[1400px] mx-auto px-4 sm:px-6 h-20 flex items-center justify-between gap-4">
+
+      <!-- Official Logo & Brand Name -->
+      <div id="headerHomeLink" class="flex items-center gap-3.5 cursor-pointer shrink-0 group" role="button" tabindex="0">
+        <img
+          src="./icons/blimbloom-emblem.png"
+          alt="Blimbloom Official Emblem"
+          class="w-12 h-12 rounded-full object-cover border-2 border-[#143328]/20 dark:border-emerald-700 shadow-sm group-hover:scale-105 transition"
+        />
+        <div>
+          <div class="flex items-center gap-2.5">
+            <span class="text-lg sm:text-xl font-extrabold tracking-wider text-[#143328] dark:text-white">BLIMBLOOM</span>
+            <span class="hidden sm:inline-block text-[10px] font-bold uppercase tracking-widest px-2.5 py-0.5 rounded-full bg-[#143328] text-white dark:bg-emerald-700">
+              PROTECT &amp; AMPLIFY
+            </span>
+          </div>
+          <p class="text-xs text-slate-500 dark:text-slate-400 font-medium">
+            Thailand Forest Ecosystem AI &amp; Early Warning Command Center
+          </p>
+        </div>
+      </div>
+
+      <!-- Clean 4-Page Navigation Tabs (No Clutter) -->
+      <nav class="hidden xl:flex items-center gap-1.5 bg-slate-100/90 dark:bg-slate-800 p-1.5 rounded-2xl border border-slate-200/80 dark:border-slate-700" aria-label="Main Navigation">
+        <button type="button" class="nav-view-btn active px-4 py-2 rounded-xl text-xs font-bold transition whitespace-nowrap flex items-center gap-2" data-view="map-alerts">
+          <span>🗺️</span>
+          <span>1. แผนที่และแจ้งเตือนภัย (GIS &amp; Alerts)</span>
+        </button>
+        <button type="button" class="nav-view-btn px-4 py-2 rounded-xl text-xs font-bold transition whitespace-nowrap flex items-center gap-2" data-view="analytics">
+          <span>📊</span>
+          <span>2. ข้อมูลวิจัย &amp; คาร์บอน (Big Data &amp; ESG)</span>
+        </button>
+        <button type="button" class="nav-view-btn px-4 py-2 rounded-xl text-xs font-bold transition whitespace-nowrap flex items-center gap-2" data-view="hardware">
+          <span>🔌</span>
+          <span>3. อุปกรณ์ &amp; สถานะระบบ (Hardware)</span>
+        </button>
+        <button type="button" class="nav-view-btn px-4 py-2 rounded-xl text-xs font-bold transition whitespace-nowrap flex items-center gap-2" data-view="mobile-ranger">
+          <span>📱</span>
+          <span>4. แอปเจ้าหน้าที่ (Ranger App)</span>
+        </button>
+      </nav>
+
+      <!-- Right Action Controls -->
+      <div class="flex items-center gap-2.5 shrink-0">
+        <!-- Toggle Sensor Simulator Drawer Button -->
+        <button id="btnOpenSimulatorModal" type="button" class="px-4 py-2.5 rounded-xl text-xs font-bold bg-[#143328] hover:bg-[#1B4332] dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white shadow-sm transition flex items-center gap-2">
+          <span>🎛️</span>
+          <span>จำลองส่งเสียงเซนเซอร์ (Simulate)</span>
+        </button>
+
+        <!-- Light / Dark Theme Toggle -->
+        <button id="btnThemeToggle" type="button" class="w-10 h-10 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-sm transition" title="สลับโหมดสีสว่าง / มืด">
+          <span id="themeToggleIcon">🌙</span>
+        </button>
+
+        <!-- Cloud Connection Badge -->
+        <span id="connectionBadge" class="conn-badge conn-connecting" title="สถานะการเชื่อมต่อ Firestore &amp; Cloud Run">
+          <span class="conn-dot"></span>
+          <span id="connectionText">Connecting</span>
+        </span>
+      </div>
+    </div>
+
+    <!-- Mobile / Tablet Navigation Bar (Visible below XL) -->
+    <div class="xl:hidden border-t border-slate-200 dark:border-slate-800 bg-slate-50/90 dark:bg-slate-900 px-4 py-2 overflow-x-auto">
+      <div class="flex items-center gap-1.5 min-w-max">
+        <button type="button" class="nav-view-btn active px-3.5 py-1.5 rounded-xl text-xs font-bold transition whitespace-nowrap" data-view="map-alerts">
+          🗺️ 1. แผนที่ &amp; แจ้งเตือน
+        </button>
+        <button type="button" class="nav-view-btn px-3.5 py-1.5 rounded-xl text-xs font-bold transition whitespace-nowrap" data-view="analytics">
+          📊 2. Big Data &amp; ESG
+        </button>
+        <button type="button" class="nav-view-btn px-3.5 py-1.5 rounded-xl text-xs font-bold transition whitespace-nowrap" data-view="hardware">
+          🔌 3. อุปกรณ์เซนเซอร์
+        </button>
+        <button type="button" class="nav-view-btn px-3.5 py-1.5 rounded-xl text-xs font-bold transition whitespace-nowrap" data-view="mobile-ranger">
+          📱 4. แอปเจ้าหน้าที่
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ==================== SYSTEM BANNERS (CONFIG, PWA INSTALL, PUSH) ==================== -->
+  <div class="max-w-[1400px] w-full mx-auto px-4 sm:px-6">
+    <!-- Config Notice Banner (Compact & Professional) -->
+    <section id="configNoticeBanner" class="hidden mt-4 px-4 py-2.5 rounded-xl bg-amber-50/90 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/70 text-amber-900 dark:text-amber-200 text-xs flex flex-wrap items-center justify-between gap-2" aria-live="polite">
+      <div class="flex items-center gap-2">
+        <span class="px-2 py-0.5 text-[10px] font-bold uppercase rounded bg-amber-600 text-white">โหมดสาธิต (Demo Mode)</span>
+        <span>ระบบพร้อมจำลองเสียงจริงและวิเคราะห์อัตโนมัติ หากต้องการเชื่อม Cloud Run &amp; Firestore จริง ให้ใส่ค่าใน <code class="px-1.5 py-0.5 rounded bg-amber-100 dark:bg-amber-900/60 font-mono">public/js/config.js</code></span>
+      </div>
+    </section>
+
+    <!-- iOS / Mobile PWA Install Banner -->
+    <section id="installBanner" class="hidden mt-3 px-4 py-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xs" aria-label="Install App Instructions">
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <div class="flex items-center gap-3">
+          <img src="./icons/blimbloom-emblem.png" alt="" class="w-9 h-9 rounded-full border border-slate-200" />
+          <div>
+            <h2 class="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">ติดตั้งแอป BLIMBLOOM ลงบนหน้าจอมือถือ (PWA)</h2>
+            <p id="installInstructionsText" class="text-xs text-slate-500 dark:text-slate-400">
+              บน iPhone Safari: กดปุ่ม <strong>แชร์ (Share ↑)</strong> แล้วเลือก <strong>เพิ่มไปยังหน้าจอโฮม (Add to Home Screen ＋)</strong> เพื่อรับแจ้งเตือนฉุกเฉิน
+            </p>
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <button id="btnNativeInstall" type="button" class="btn btn-primary btn-sm hidden">ติดตั้งแอป</button>
+          <button id="btnDismissInstall" type="button" class="btn btn-ghost btn-sm">ซ่อนแถบนี้</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Standalone Push Notification Enable Bar -->
+    <section id="pushEnableBar" class="hidden mt-3 px-4 py-3 rounded-xl bg-emerald-50/90 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/70 flex flex-wrap items-center justify-between gap-3" aria-label="Push Notifications">
+      <div class="flex items-center gap-3">
+        <span class="text-lg" aria-hidden="true">🔔</span>
+        <div>
+          <strong id="pushStatusTitle" class="text-xs sm:text-sm font-bold text-slate-900 dark:text-white block">ระบบแจ้งเตือนฉุกเฉินสำหรับเจ้าหน้าที่ (FCM Push)</strong>
+          <p id="pushStatusDesc" class="text-xs text-slate-600 dark:text-slate-400 m-0">รับการแจ้งเตือนทันทีเมื่อเซนเซอร์ตรวจพบเสียงช้างป่าหรือเลื่อยยนต์ (High Priority)</p>
+        </div>
+      </div>
+      <button id="btnEnableAlerts" type="button" class="btn btn-primary btn-sm">Enable alerts</button>
+    </section>
+  </div>
+
+  <!-- ==================== SENSOR SIMULATOR DRAWER (PAGE A: DEMO TRIGGER) ==================== -->
+  <section id="simulatorDrawer" class="max-w-[1400px] w-full mx-auto px-4 sm:px-6 mt-4">
+    <div class="bg-white dark:bg-slate-900 border-2 border-[#143328]/15 dark:border-emerald-800/60 rounded-2xl p-4 sm:p-5 shadow-sm">
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-[#143328] text-white flex items-center justify-center text-lg shrink-0">
+            🎛️
+          </div>
+          <div>
+            <div class="flex flex-wrap items-center gap-2">
+              <span class="px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider rounded-full bg-emerald-100 dark:bg-emerald-950 text-[#143328] dark:text-emerald-300">
+                หน้า A · Sensor Simulator
+              </span>
+              <h2 class="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
+                จำลองการส่งเสียงจากเซนเซอร์ในป่า (Sensor → Cloud Run `/analyze` → Gemini AI → แจ้งเตือน)
+              </h2>
+            </div>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+              กดเลือกจุดเซนเซอร์ด้านล่างเพื่อส่งไฟล์เสียงจริงไปวิเคราะห์ และดูผลลัพธ์เด้งขึ้นบนแผนที่ประเทศไทยและรายการแจ้งเตือนทันที
+            </p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <label class="flex items-center gap-2 text-xs font-semibold text-slate-700 dark:text-slate-300 cursor-pointer select-none bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-lg">
+            <input type="checkbox" id="chkPlayOnSimulate" checked class="accent-[#143328] w-4 h-4 rounded" />
+            <span>🔊 เปิดเสียงออกลำโพงเมื่อกด</span>
+          </label>
+          <button id="btnToggleSimulate" type="button" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition">
+            พับเก็บ ▲
+          </button>
+        </div>
+      </div>
+
+      <div id="simulateBody" class="pt-4 mt-3.5 border-t border-slate-100 dark:border-slate-800">
+        <div id="sensorButtonsGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          <!-- Populated dynamically from public/js/sensors.js -->
+        </div>
+
+        <!-- Simulation Progress Status -->
+        <div id="simulateStatusBox" class="simulate-status hidden mt-3.5" role="status" aria-live="polite">
+          <div id="simulateSpinner" class="spinner"></div>
+          <div class="simulate-status-copy">
+            <strong id="simulateStatusText">กำลังส่งไฟล์เสียงไปยัง Cloud Run &amp; Gemini AI...</strong>
+            <span class="simulate-substatus">กำลังจำแนกคลื่นความถี่เสียง คำนวณ % ความมั่นใจ และประเมินความเร่งด่วน...</span>
+          </div>
+          <div class="acoustic-wave" aria-hidden="true">
+            <span></span><span></span><span></span><span></span><span></span>
+          </div>
+        </div>
+
+        <!-- Error Box -->
+        <div id="simulateErrorBox" class="error-banner hidden mt-3" role="alert"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== MAIN WORKSPACE ==================== -->
+  <main class="max-w-[1400px] w-full mx-auto px-4 sm:px-6 py-5 flex-1 flex flex-col gap-6">
+
+    <!-- ==================== INCIDENT DETAIL VIEW (WHEN AN ALERT IS CLICKED) ==================== -->
+    <div id="detailView" class="hidden" aria-live="polite">
+      <div class="flex items-center justify-between mb-3">
+        <button id="btnBackToList" type="button" class="btn btn-back">
+          <span aria-hidden="true">←</span> กลับไปหน้าแดชบอร์ด (Back to Dashboard)
+        </button>
+        <span id="detailIdLabel" class="detail-id-code"></span>
+      </div>
+      <article id="detailCard" class="card detail-card"></article>
+    </div>
+
+    <!-- ==================== TABBED PAGES WORKSPACE ==================== -->
+    <div id="listView" class="flex flex-col gap-6">
+
+      <!-- EXECUTIVE KPI SUMMARY BAR (Clean 4 Cards) -->
+      <section id="kpiSummarySection" class="grid grid-cols-2 lg:grid-cols-4 gap-4" aria-label="Key Performance Indicators">
+        <div class="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-4 shadow-2xs flex items-center justify-between">
+          <div>
+            <span class="text-xs font-semibold text-slate-500 dark:text-slate-400">เครือข่ายเซนเซอร์ในพื้นที่ป่า</span>
+            <div class="text-2xl font-extrabold text-slate-900 dark:text-white mt-1 flex items-baseline gap-2">
+              <span>6 โหนด</span>
+              <span class="text-[11px] font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950 px-2 py-0.5 rounded-full">ออนไลน์ 100%</span>
+            </div>
+            <span class="text-xs text-slate-500 dark:text-slate-400 mt-1 block">อุทยานแห่งชาติกุยบุรี จ.ประจวบคีรีขันธ์</span>
+          </div>
+          <div class="w-12 h-12 rounded-2xl bg-[#F3F8F5] dark:bg-emerald-950/80 text-[#143328] dark:text-emerald-400 flex items-center justify-center text-2xl">
+            🌲
+          </div>
+        </div>
+
+        <div class="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-4 shadow-2xs flex items-center justify-between">
+          <div>
+            <span class="text-xs font-semibold text-slate-500 dark:text-slate-400">แจ้งเตือนภัยคุกคามระดับสูง (High)</span>
+            <div class="flex items-baseline gap-2 mt-1">
+              <span id="kpiHighCount" class="text-2xl font-extrabold text-red-600 dark:text-red-400">2</span>
+              <span class="text-xs font-medium text-slate-500 dark:text-slate-400">ความแม่นยำ AI เฉลี่ย <strong id="kpiAvgConfidence" class="text-slate-800 dark:text-slate-200">93%</strong></span>
+            </div>
+            <span class="text-xs text-slate-500 dark:text-slate-400 mt-1 block">ตรวจจับช้างป่า &amp; เลื่อยยนต์ตัดไม้</span>
+          </div>
+          <div class="w-12 h-12 rounded-2xl bg-red-50 dark:bg-red-950/70 text-red-600 dark:text-red-400 flex items-center justify-center text-2xl">
+            🐘
+          </div>
+        </div>
+
+        <div class="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-4 shadow-2xs flex items-center justify-between">
+          <div>
+            <span class="text-xs font-semibold text-slate-500 dark:text-slate-400">คาร์บอนเครดิตป่าไม้ที่ปกป้องได้</span>
+            <div class="text-2xl font-extrabold text-slate-900 dark:text-white mt-1">
+              142,850 <span class="text-xs font-bold text-emerald-700 dark:text-emerald-400">tCO₂e</span>
+            </div>
+            <span class="text-xs text-slate-500 dark:text-slate-400 mt-1 block">รองรับมาตรฐาน ESG / CSR ระดับองค์กร</span>
+          </div>
+          <div class="w-12 h-12 rounded-2xl bg-amber-50 dark:bg-amber-950/70 text-amber-700 dark:text-amber-400 flex items-center justify-center text-2xl">
+            🌿
+          </div>
+        </div>
+
+        <div class="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-4 shadow-2xs flex items-center justify-between">
+          <div>
+            <span class="text-xs font-semibold text-slate-500 dark:text-slate-400">ข้อมูลระบบนิเวศแบบ Multimodal</span>
+            <div class="text-2xl font-extrabold text-slate-900 dark:text-white mt-1">
+              6 <span class="text-xs font-bold text-sky-700 dark:text-sky-400">มิติข้อมูล</span>
+            </div>
+            <span class="text-xs text-slate-500 dark:text-slate-400 mt-1 block">เสียง · ภาพ · อัลตราโซนิก · อุณหภูมิ · ความชื้น · แสง</span>
+          </div>
+          <div class="w-12 h-12 rounded-2xl bg-sky-50 dark:bg-sky-950/70 text-sky-600 dark:text-sky-400 flex items-center justify-center text-2xl">
+            🎙️
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================== PAGE 1: THAILAND GIS MAP & EARLY WARNING FEED (DEFAULT) ==================== -->
+      <div id="sectionMapAndAlerts" class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+
+        <!-- LEFT 7 COLS: THAILAND FOREST ECOSYSTEM GIS MAP -->
+        <section id="mapColumnCard" class="lg:col-span-7 bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-5 shadow-2xs flex flex-col">
+          <!-- Map Header & Thailand Location Selector -->
+          <div class="flex flex-wrap items-start justify-between gap-3 mb-4 pb-3.5 border-b border-slate-100 dark:border-slate-800">
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="px-2.5 py-0.5 text-[11px] font-bold rounded-full bg-[#F3F8F5] dark:bg-emerald-950 text-[#143328] dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                  🇹🇭 Thailand Forest GIS Network
+                </span>
+                <h2 class="text-base sm:text-lg font-extrabold text-slate-900 dark:text-white">
+                  แผนที่เครือข่ายเซนเซอร์เฝ้าระวังระบบนิเวศ (Real-Time)
+                </h2>
+              </div>
+              <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                คลิกที่สัญลักษณ์เซนเซอร์ (<strong class="text-slate-700 dark:text-slate-200">🐘 ช้างป่า · 🪚 เลื่อยยนต์ · 🦗 ธรรมชาติ · 📷 กล้อง AI · 🦇 ค้างคาว</strong>) เพื่อดูค่าสภาพอากาศและฟังเสียงสด
+              </p>
+            </div>
+
+            <!-- Thailand Forest Area Selector & Map Controls -->
+            <div class="flex flex-wrap items-center gap-2">
+              <label for="selectThailandZone" class="sr-only">เลือกพื้นที่ป่าในประเทศไทย</label>
+              <select
+                id="selectThailandZone"
+                class="px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-100 border border-slate-200 dark:border-slate-700 focus:outline-none focus:border-emerald-600 cursor-pointer"
+              >
+                <option value="kuiburi">📍 อุทยานแห่งชาติกุยบุรี จ.ประจวบคีรีขันธ์ (6 โหนด)</option>
+                <option value="thailand">🇹🇭 แผนที่ภาพรวมประเทศไทย (Thailand Overview)</option>
+                <option value="khaoyai">🌳 อุทยานแห่งชาติเขาใหญ่ จ.นครราชสีมา</option>
+                <option value="huaikhakhaeng">🐅 เขตรักษาพันธุ์สัตว์ป่าห้วยขาแข้ง จ.อุทัยธานี</option>
+              </select>
+
+              <button id="btnToggleMapStyle" type="button" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 transition">
+                🗺️ <span id="mapStyleLabel">แผนที่ประเทศไทย (ชัดเจน)</span>
+              </button>
+
+              <button id="btnToggleHeatmap" type="button" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-red-50 hover:bg-red-100 dark:bg-red-950/60 dark:hover:bg-red-900/60 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800 transition flex items-center gap-1" aria-pressed="true">
+                <span>🔥</span>
+                <span id="heatmapBtnLabel">จุดเสี่ยง: เปิด</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Interactive Leaflet Map of Thailand -->
+          <div class="relative w-full h-[400px] sm:h-[430px] rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-800">
+            <div id="leafletMap" class="w-full h-full z-10"></div>
+
+            <!-- Clear Legend Pill (Top-Left over Map) -->
+            <div class="absolute top-3 left-3 z-20 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border border-slate-200 dark:border-slate-700 rounded-xl px-3.5 py-2 shadow-md flex flex-wrap items-center gap-3 text-[11px]">
+              <span class="flex items-center gap-1.5 font-bold text-slate-700 dark:text-slate-200">
+                <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> ปกติ (3)
+              </span>
+              <span class="flex items-center gap-1.5 font-bold text-amber-700 dark:text-amber-400">
+                <span class="w-2.5 h-2.5 rounded-full bg-amber-500 animate-ping"></span> แจ้งเตือนภัย (2)
+              </span>
+              <span class="flex items-center gap-1.5 font-bold text-red-600 dark:text-red-400">
+                <span class="w-2.5 h-2.5 rounded-full bg-red-500"></span> แบตเตอรี่ต่ำ (1)
+              </span>
+            </div>
+          </div>
+
+          <!-- Selected Node Live Telemetry Card (Below Map — Clean & Structured) -->
+          <div id="gisNodeTelemetryCard" class="mt-4 p-4 rounded-2xl bg-slate-50/90 dark:bg-slate-800/60 border border-slate-200/90 dark:border-slate-700/80">
+            <!-- Populated dynamically when clicking/hovering a sensor node -->
+          </div>
+        </section>
+
+        <!-- RIGHT 5 COLS: EARLY WARNING FEED (PAGE B / RANGER ALERT STREAM) -->
+        <section id="alertColumnCard" class="lg:col-span-5 bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-5 shadow-2xs flex flex-col">
+          <!-- Mobile Ranger App Banner (Shown in Ranger App mode & on mobile screens) -->
+          <div id="mobileRangerAppBanner" class="hidden mb-4 p-3.5 rounded-xl bg-gradient-to-r from-[#143328] to-[#2D6A4F] text-white shadow-sm">
+            <div class="flex items-center justify-between gap-3">
+              <div class="flex items-center gap-2.5">
+                <img src="./icons/blimbloom-emblem.png" alt="Blimbloom" class="w-10 h-10 rounded-full border-2 border-white/40 shrink-0" />
+                <div>
+                  <div class="flex items-center gap-1.5">
+                    <span class="text-xs font-extrabold tracking-wide">BLIMBLOOM RANGER APP</span>
+                    <span class="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-white/20 text-emerald-100">iOS / Android PWA</span>
+                  </div>
+                  <p class="text-[11px] text-emerald-100 mt-0.5">
+                    ระบบรับแจ้งเตือนภัยคุกคามและสั่งการชุดลาดตระเวนภาคสนาม
+                  </p>
+                </div>
+              </div>
+              <button id="btnMobileRangerPush" type="button" class="px-3 py-2 rounded-xl bg-white text-[#143328] hover:bg-emerald-50 font-extrabold text-xs shrink-0 shadow-xs transition">
+                🔔 เปิดแจ้งเตือน
+              </button>
+            </div>
+          </div>
+
+          <div class="flex items-start justify-between gap-2 mb-3 pb-3 border-b border-slate-100 dark:border-slate-800">
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="px-2.5 py-0.5 text-[11px] font-bold rounded-full bg-red-50 dark:bg-red-950 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800">
+                  🚨 Early Warning Feed
+                </span>
+                <span id="incidentCountBadge" class="count-pill">0</span>
+              </div>
+              <h2 id="incidentsHeading" class="text-base sm:text-lg font-extrabold text-slate-900 dark:text-white mt-1">
+                รายการแจ้งเตือนภัยคุกคามล่าสุด (Real-Time)
+              </h2>
+              <p class="text-xs text-slate-500 dark:text-slate-400">
+                ลำดับตามความเร่งด่วน · กดฟังเสียงหลักฐานและสั่งการเจ้าหน้าที่ได้ทันที
+              </p>
+            </div>
+          </div>
+
+          <!-- Filter Pills -->
+          <div class="filter-bar mb-3.5" role="tablist" aria-label="Filter incidents">
+            <button type="button" class="filter-pill active" data-filter="all">
+              ทั้งหมด <span id="filterCountAll" class="filter-count">0</span>
+            </button>
+            <button type="button" class="filter-pill" data-filter="high">
+              🔴 ด่วนมาก (High) <span id="filterCountHigh" class="filter-count">0</span>
+            </button>
+            <button type="button" class="filter-pill" data-filter="active">
+              ⏳ รอดำเนินการ <span id="filterCountActive" class="filter-count">0</span>
+            </button>
+          </div>
+
+          <!-- Loading Skeleton -->
+          <div id="incidentsLoading" class="empty-state my-auto">
+            <div class="spinner spinner-lg"></div>
+            <p class="empty-title">กำลังเชื่อมต่อฐานข้อมูลแจ้งเตือนแบบ Real-time...</p>
+          </div>
+
+          <!-- Empty State -->
+          <div id="incidentsEmpty" class="empty-state hidden my-auto">
+            <div class="empty-icon" aria-hidden="true">🌿</div>
+            <h3 id="emptyStateTitle" class="empty-title">ไม่มีรายการแจ้งเตือนในหมวดหมู่นี้</h3>
+            <p id="emptyStateDesc" class="empty-desc">
+              เหตุการณ์ในป่าปกติ สามารถกดปุ่มจำลองเซนเซอร์ด้านบนเพื่อทดสอบระบบแจ้งเตือนได้ทันที
+            </p>
+          </div>
+
+          <!-- Scrollable Alert Cards List -->
+          <div id="incidentsList" class="incidents-list max-h-[530px] overflow-y-auto pr-1" role="list"></div>
+        </section>
+      </div>
+
+      <!-- ==================== PAGE 2: BIG DATA & RESEARCH ANALYTICS (HIDDEN UNTIL TAB 2 CLICKED) ==================== -->
+      <section id="sectionAnalytics" class="hidden bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-6 shadow-2xs">
+        <div class="flex flex-wrap items-start justify-between gap-4 mb-6 pb-4 border-b border-slate-100 dark:border-slate-800">
+          <div>
+            <div class="flex flex-wrap items-center gap-2">
+              <span class="px-2.5 py-0.5 text-[11px] font-bold rounded-full bg-sky-50 dark:bg-sky-950 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-800">
+                📊 Big Data &amp; ESG Analytics
+              </span>
+              <span class="text-xs font-semibold text-[#143328] dark:text-emerald-300 bg-[#F3F8F5] dark:bg-emerald-950/80 border border-emerald-200 dark:border-emerald-800 px-2.5 py-0.5 rounded-full">
+                💼 สำหรับผู้สนับสนุนองค์กร · สนามบิน · WWF / UN · สถาบันวิจัย
+              </span>
+            </div>
+            <h2 class="text-lg sm:text-xl font-extrabold text-slate-900 dark:text-white mt-1.5">
+              การวิเคราะห์ความสัมพันธ์ข้อมูลหลายมิติ และดัชนีคาร์บอนเครดิตป่าไม้
+            </h2>
+            <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
+              รวบรวมข้อมูลเสียง ภาพถ่าย อัลตราโซนิก อุณหภูมิ ความชื้น และแสงสว่าง เพื่อสร้างมูลค่าข้อมูลระบบนิเวศ (Ecosystem Data Valuation)
+            </p>
+          </div>
+
+          <!-- Export Dataset Buttons -->
+          <div class="flex flex-wrap items-center gap-2.5">
+            <button id="btnExportCsv" type="button" class="px-4 py-2.5 rounded-xl text-xs font-bold bg-[#143328] hover:bg-[#1B4332] text-white shadow-sm transition flex items-center gap-1.5">
+              <span>⬇️</span>
+              <span>ดาวน์โหลด Dataset (CSV)</span>
+            </button>
+            <button id="btnExportJson" type="button" class="px-4 py-2.5 rounded-xl text-xs font-semibold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 transition flex items-center gap-1.5">
+              <span>{ }</span>
+              <span>Export API JSON</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          <!-- Chart 1: Multi-Sensor Correlation -->
+          <div class="lg:col-span-5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 flex flex-col">
+            <div class="flex items-center justify-between mb-3">
+              <div>
+                <h3 class="text-sm font-bold text-slate-900 dark:text-white">
+                  ความสัมพันธ์ของอุณหภูมิ/ความชื้น ต่อการออกหากินของช้างป่า (24 ชม.)
+                </h3>
+                <p class="text-xs text-slate-500 dark:text-slate-400">
+                  พบความสัมพันธ์ชัดเจนเมื่อความชื้นในป่าลดต่ำลงในช่วงค่ำ
+                </p>
+              </div>
+              <span class="text-xs font-bold px-2.5 py-0.5 rounded-md bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300">
+                r = -0.84
+              </span>
+            </div>
+            <div class="relative flex-1 min-h-[260px]">
+              <canvas id="multiSensorChart"></canvas>
+            </div>
+          </div>
+
+          <!-- Chart 2: 6-Modality Data Ingestion -->
+          <div class="lg:col-span-4 bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 flex flex-col">
+            <div class="flex items-center justify-between mb-3">
+              <div>
+                <h3 class="text-sm font-bold text-slate-900 dark:text-white">
+                  ปริมาณข้อมูลที่จัดเก็บแยกตามชนิดเซนเซอร์ (6 มิติ)
+                </h3>
+                <p class="text-xs text-slate-500 dark:text-slate-400">
+                  จำนวนชุดข้อมูลที่ส่งเข้า Cloud Data Lake ต่อวัน
+                </p>
+              </div>
+              <span class="text-xs font-bold px-2.5 py-0.5 rounded-md bg-sky-100 dark:bg-sky-950 text-sky-800 dark:text-sky-300">
+                48.2k รายการ/วัน
+              </span>
+            </div>
+            <div class="relative flex-1 min-h-[260px]">
+              <canvas id="modalityBarChart"></canvas>
+            </div>
+          </div>
+
+          <!-- Carbon & Ecology Index Summary Card -->
+          <div class="lg:col-span-3 bg-gradient-to-br from-[#143328] to-[#2D6A4F] text-white rounded-2xl p-5 shadow-md flex flex-col justify-between">
+            <div>
+              <div class="flex items-center justify-between">
+                <span class="text-[11px] font-bold uppercase tracking-wider text-emerald-200">Carbon &amp; Ecology Index</span>
+                <span class="px-2.5 py-0.5 text-[11px] font-extrabold rounded-full bg-white text-[#143328]">AAA Grade</span>
+              </div>
+              <h3 class="text-base font-extrabold mt-1">รายงานความยั่งยืน (ESG Impact)</h3>
+
+              <div class="mt-4 p-3.5 rounded-xl bg-white/10 backdrop-blur-sm border border-white/20">
+                <div class="flex items-baseline justify-between">
+                  <span class="text-xs font-medium text-emerald-50">ดัชนีความสมบูรณ์ของผืนป่า</span>
+                  <span class="text-2xl font-extrabold text-white">94.2<span class="text-xs font-normal text-emerald-100">/100</span></span>
+                </div>
+                <div class="w-full h-2 bg-black/25 rounded-full overflow-hidden mt-2">
+                  <div class="h-full bg-emerald-300 rounded-full" style="width: 94.2%"></div>
+                </div>
+              </div>
+
+              <div class="mt-4 space-y-2.5 text-xs">
+                <div class="flex items-center justify-between py-1 border-b border-white/15">
+                  <span class="text-emerald-100">🌳 คาร์บอนสะสมที่ปกป้องได้</span>
+                  <strong class="font-bold text-white">142,850 tCO₂e</strong>
+                </div>
+                <div class="flex items-center justify-between py-1 border-b border-white/15">
+                  <span class="text-emerald-100">🦇 ดัชนีความหลากหลายทางเสียง</span>
+                  <strong class="font-bold text-white">8.74 ACI (สูง)</strong>
+                </div>
+                <div class="flex items-center justify-between py-1 border-b border-white/15">
+                  <span class="text-emerald-100">🪚 ป้องกันการลักลอบตัดไม้</span>
+                  <strong class="font-bold text-white">18 ครั้งในปีนี้</strong>
+                </div>
+                <div class="flex items-center justify-between py-1">
+                  <span class="text-emerald-100">🐘 ลดความเสียหายพืชผลเกษตร</span>
+                  <strong class="font-bold text-white">-68% YoY</strong>
+                </div>
+              </div>
+            </div>
+
+            <p class="text-[11px] text-emerald-100/90 mt-4 pt-3 border-t border-white/20 leading-relaxed">
+              ใช้เป็นหลักฐานตรวจสอบย้อนกลับ (Auditable Metrics) สำหรับองค์กรที่ต้องการสนับสนุนคาร์บอนเครดิตและอนุรักษ์ความหลากหลายทางชีวภาพ
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================== PAGE 3: HARDWARE INTEGRATION & SYSTEM HEALTH (HIDDEN UNTIL TAB 3 CLICKED) ==================== -->
+      <section id="sectionHardware" class="hidden bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-6 shadow-2xs">
+        <div class="flex flex-wrap items-start justify-between gap-4 mb-6 pb-4 border-b border-slate-100 dark:border-slate-800">
+          <div>
+            <span class="px-2.5 py-0.5 text-[11px] font-bold rounded-full bg-purple-50 dark:bg-purple-950 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800">
+              🔌 Hardware Integration &amp; Cloud Health
+            </span>
+            <h2 class="text-lg sm:text-xl font-extrabold text-slate-900 dark:text-white mt-1.5">
+              ทะเบียนอุปกรณ์เซนเซอร์ภาคสนาม และสถานะการเชื่อมต่อ Cloud Microservices
+            </h2>
+            <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
+              รองรับการเชื่อมต่อกับฮาร์ดแวร์เดิมของอุทยานฯ (ESP32, Raspberry Pi, กล้องดักถ่าย CCTV, Ultrasonic) เข้าสู่ Google Cloud Run
+            </p>
+          </div>
+
+          <!-- Microservices Health Indicators -->
+          <div class="flex flex-wrap items-center gap-2.5">
+            <div class="px-3.5 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center gap-2 text-xs">
+              <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+              <span class="text-slate-600 dark:text-slate-300">Cloud Run `/analyze`:</span>
+              <strong class="text-emerald-700 dark:text-emerald-400">พร้อมใช้งาน</strong>
+            </div>
+            <div class="px-3.5 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center gap-2 text-xs">
+              <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+              <span class="text-slate-600 dark:text-slate-300">Gemini 2.5 Flash:</span>
+              <strong class="text-emerald-700 dark:text-emerald-400">ออนไลน์</strong>
+            </div>
+            <div class="px-3.5 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center gap-2 text-xs">
+              <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+              <span class="text-slate-600 dark:text-slate-300">Firestore &amp; FCM:</span>
+              <strong class="text-emerald-700 dark:text-emerald-400">ซิงค์ข้อมูลสด</strong>
+            </div>
+          </div>
+        </div>
+
+        <!-- Clean Enterprise Table -->
+        <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800">
+          <table class="w-full text-left border-collapse text-xs">
+            <thead>
+              <tr class="bg-slate-50 dark:bg-slate-800/80 text-slate-600 dark:text-slate-300 font-bold uppercase tracking-wider text-[11px] border-b border-slate-200 dark:border-slate-800">
+                <th class="py-3.5 px-4">รหัสโหนด &amp; จุดติดตั้ง</th>
+                <th class="py-3.5 px-4">ฮาร์ดแวร์ (Hardware Platform)</th>
+                <th class="py-3.5 px-4">เซนเซอร์ที่เชื่อมต่อ (Modalities)</th>
+                <th class="py-3.5 px-4">โปรโตคอลส่งข้อมูล</th>
+                <th class="py-3.5 px-4">ระดับแบตเตอรี่ / โซลาร์เซลล์</th>
+                <th class="py-3.5 px-4">สถานะ</th>
+                <th class="py-3.5 px-4 text-right">การจัดการ</th>
+              </tr>
+            </thead>
+            <tbody id="deviceRegistryTableBody" class="divide-y divide-slate-200/70 dark:divide-slate-800">
+              <!-- Populated dynamically by public/js/app.js -->
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <!-- ==================== SECTION 5: "BLIMBLOOM AI ASSISTANT" (GEMINI WIDGET) ==================== -->
+  <div class="fixed bottom-5 right-5 z-50 flex flex-col items-end">
+    <section id="aiChatPanel" class="hidden mb-3 w-[calc(100vw-2.5rem)] sm:w-[410px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-2xl overflow-hidden flex flex-col">
+      <!-- Assistant Header -->
+      <div class="bg-[#143328] text-white px-4 py-3.5 flex items-center justify-between">
+        <div class="flex items-center gap-2.5">
+          <img src="./icons/blimbloom-emblem.png" alt="" class="w-8 h-8 rounded-full border border-white/30" />
+          <div>
+            <div class="flex items-center gap-2">
+              <strong class="text-sm font-bold">Blimbloom AI Assistant</strong>
+              <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-white text-[#143328]">Gemini</span>
+            </div>
+            <p class="text-[11px] text-emerald-100">ถาม-ตอบข้อมูลเชิงลึกระบบนิเวศด้วยภาษาธรรมชาติ</p>
+          </div>
+        </div>
+        <button id="btnCloseAiChat" type="button" class="text-white/80 hover:text-white text-sm font-bold px-2 py-1 rounded-lg">
+          ✕
+        </button>
+      </div>
+
+      <!-- Suggested Prompts -->
+      <div class="px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-800 flex flex-wrap gap-1.5">
+        <button type="button" class="ai-prompt-chip text-[11px] font-medium bg-white dark:bg-slate-900 hover:bg-emerald-50 dark:hover:bg-emerald-950/60 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 rounded-full px-3 py-1 transition shadow-2xs" data-prompt="สรุปเหตุการณ์ช้างบุกรุกในเดือนนี้ให้หน่อย">
+          🐘 สรุปเหตุช้างบุกรุกเดือนนี้
+        </button>
+        <button type="button" class="ai-prompt-chip text-[11px] font-medium bg-white dark:bg-slate-900 hover:bg-emerald-50 dark:hover:bg-emerald-950/60 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 rounded-full px-3 py-1 transition shadow-2xs" data-prompt="พื้นที่ไหนมีแนวโน้มความชื้นต่ำและเสี่ยงไฟป่ามากที่สุดในสัปดาห์หน้า?">
+          🔥 พื้นที่เสี่ยงความชื้นต่ำ/ไฟป่า
+        </button>
+        <button type="button" class="ai-prompt-chip text-[11px] font-medium bg-white dark:bg-slate-900 hover:bg-emerald-50 dark:hover:bg-emerald-950/60 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 rounded-full px-3 py-1 transition shadow-2xs" data-prompt="สร้าง Report สรุปการตรวจจับเสียงเลื่อยยนต์เพื่อส่งให้ตำรวจ">
+          🪚 สร้าง Report เลื่อยยนต์ส่งตำรวจ
+        </button>
+      </div>
+
+      <!-- Chat History -->
+      <div id="aiChatHistory" class="p-4 space-y-3 max-h-[300px] overflow-y-auto text-xs bg-white dark:bg-slate-900">
+        <div class="ai-msg ai-msg-bot">
+          <div class="font-bold text-[#143328] dark:text-emerald-400 mb-1">✨ Blimbloom Gemini Assistant</div>
+          <p class="text-slate-700 dark:text-slate-200 leading-relaxed m-0">
+            สวัสดีครับ! ผมเชื่อมต่อกับฐานข้อมูล <strong>Ecosystem Big Data</strong> ของอุทยานแห่งชาติในประเทศไทยแล้ว กดปุ่มคำถามตัวอย่างด้านบน หรือพิมพ์ถามเกี่ยวกับข้อมูลสัตว์ป่า อุณหภูมิ ความชื้น หรือรายงานสรุปได้เลยครับ
+          </p>
+        </div>
+      </div>
+
+      <!-- Input Box -->
+      <form id="aiChatForm" class="p-3 bg-slate-50 dark:bg-slate-800/80 border-t border-slate-200 dark:border-slate-800 flex items-center gap-2">
+        <input
+          id="aiChatInput"
+          type="text"
+          placeholder="พิมพ์คำถามเกี่ยวกับข้อมูลระบบนิเวศ..."
+          class="flex-1 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-xs rounded-xl px-3.5 py-2.5 border border-slate-300 dark:border-slate-700 focus:outline-none focus:border-[#143328]"
+        />
+        <button type="submit" class="px-4 py-2.5 rounded-xl bg-[#143328] hover:bg-[#1B4332] text-white text-xs font-bold transition shrink-0">
+          ส่งคำถาม
+        </button>
+      </form>
+    </section>
+
+    <!-- Floating Trigger Button -->
+    <button id="btnToggleAiChat" type="button" class="mb-14 md:mb-0 px-4 py-3 rounded-full bg-[#143328] hover:bg-[#1B4332] dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white font-bold text-xs sm:text-sm shadow-lg flex items-center gap-2.5 transition transform hover:scale-105 border border-white/15">
+      <img src="./icons/blimbloom-emblem.png" alt="" class="w-6 h-6 rounded-full" />
+      <span>Blimbloom AI Assistant</span>
+    </button>
+  </div>
+
+  <!-- ==================== NATIVE-STYLE MOBILE BOTTOM NAVIGATION BAR (SMARTPHONES / PWA) ==================== -->
+  <nav id="mobileBottomNav" class="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 px-2 pt-1.5 pb-[max(0.4rem,env(safe-area-inset-bottom))] grid grid-cols-4 gap-1 shadow-lg" aria-label="Mobile Bottom Navigation">
+    <button type="button" class="nav-view-btn flex flex-col items-center justify-center py-1.5 rounded-xl text-[11px] font-bold" data-view="mobile-ranger">
+      <span class="text-base leading-none mb-0.5">🚨</span>
+      <span>แจ้งเตือนด่วน</span>
+    </button>
+    <button type="button" class="nav-view-btn active flex flex-col items-center justify-center py-1.5 rounded-xl text-[11px] font-bold" data-view="map-alerts">
+      <span class="text-base leading-none mb-0.5">🗺️</span>
+      <span>แผนที่ป่า</span>
+    </button>
+    <button type="button" class="nav-view-btn flex flex-col items-center justify-center py-1.5 rounded-xl text-[11px] font-bold" data-view="analytics">
+      <span class="text-base leading-none mb-0.5">📊</span>
+      <span>ข้อมูลวิจัย</span>
+    </button>
+    <button type="button" class="nav-view-btn flex flex-col items-center justify-center py-1.5 rounded-xl text-[11px] font-bold" data-view="hardware">
+      <span class="text-base leading-none mb-0.5">🔌</span>
+      <span>เซนเซอร์</span>
+    </button>
+  </nav>
+
+  <!-- ==================== OFFICIAL FOOTER WITH FULL BRAND LOGO ==================== -->
+  <footer class="mt-auto bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 py-6 pb-20 md:pb-6 px-4 sm:px-6">
+    <div class="max-w-[1400px] mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500 dark:text-slate-400">
+      <div class="flex items-center gap-3">
+        <img src="./icons/blimbloom-logo.png" alt="Blimbloom Logo" class="w-12 h-12 rounded-xl object-contain border border-slate-200 dark:border-slate-700 bg-[#FAF9F6] p-0.5" />
+        <div>
+          <strong class="text-slate-800 dark:text-white font-bold block">BLIMBLOOM — PROTECT &amp; AMPLIFY</strong>
+          <span>Thailand Forest Ecosystem Intelligence &amp; Acoustic Early Warning Platform · Powered by Google Cloud Run, Firestore &amp; Gemini</span>
+        </div>
+      </div>
+      <div class="text-center sm:text-right">
+        <p class="m-0">Field Audio Recordings: Wikimedia Commons &amp; ESC-50 Dataset (Piczak, 2015), CC BY-NC 3.0</p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Toast Container -->
+  <div id="toastContainer" class="toast-container" aria-live="assertive"></div>
+
+  <!-- Main Application Script -->
+  <script type="module" src="./js/app.js"></script>
+</body>
+</html>

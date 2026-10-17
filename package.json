@@ -1,0 +1,15 @@
+{
+  "name": "blimbloom-web-app",
+  "version": "1.0.0",
+  "description": "BLIMBLOOM — Protect & Amplify · Thailand Forest Ecosystem AI & Early Warning Platform",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node scripts/sync-env.js && node server.js",
+    "env:sync": "node scripts/sync-env.js",
+    "deploy:hosting": "node scripts/sync-env.js && firebase deploy --only hosting",
+    "deploy:rules": "firebase deploy --only firestore:rules"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
