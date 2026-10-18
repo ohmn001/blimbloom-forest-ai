@@ -12,9 +12,20 @@ import {
   isConfigReady,
   isCloudRunReady,
   isVapidReady
-} from "./config.js";
-import { SENSORS, loadSensorAudioPayload } from "./sensors.js";
-import { getCurrentLang, setLanguage, t } from "./i18n.js";
+} from "./config.js?v9";
+import { SENSORS, loadSensorAudioPayload } from "./sensors.js?v9";
+import { getCurrentLang, setLanguage, t } from "./i18n.js?v9";
+import {
+  initAuth,
+  getAuthUser,
+  getAuthProfile,
+  saveAuthProfile,
+  openAuth,
+  logout as authLogout,
+  lock as authLock,
+  hasPin as authHasPin,
+  isAuthDemo
+} from "./auth.js?v9";
 
 // Official Firebase JS SDK (gstatic CDN)
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
@@ -47,7 +58,7 @@ const HARDWARE_NODES = [
     sensor_name: "Kui Buri North Gate",
     thai_zone: "ประตูกุยบุรีเหนือ · จ.ประจวบคีรีขันธ์",
     en_zone: "North Gate Sector · Kui Buri National Park",
-    content_icon: "🐘",
+    content_icon: "",
     content_role: "ตรวจจับเสียงช้างป่าร้องแปร๋น (Elephant Vocalization)",
     content_role_en: "Asian Elephant Vocalization & Perimeter Intrusion Detection",
     hardware_type: "ESP32-S3 Edge Mic + BME280",
@@ -57,8 +68,8 @@ const HARDWARE_NODES = [
     status: "alert", // alert = Amber pulsing ring, normal = Forest green, lowbat = Red
     location: { lat: 12.16, lng: 99.53 },
     telemetry: { temp_c: 27.1, humidity_rh: 74, light_lux: 380, ultrasonic_khz: 42.5 },
-    last_sound: "🐘 เสียงช้างป่าร้องแปร๋น (AI 94%)",
-    last_sound_en: "🐘 Asian Elephant Trumpet Detected (AI 94%)",
+    last_sound: "เสียงช้างป่าร้องแปร๋น (AI 94%)",
+    last_sound_en: "Asian Elephant Trumpet Detected (AI 94%)",
     audio_url: "audio/elephant_1.mp3",
     can_simulate: true
   },
@@ -67,7 +78,7 @@ const HARDWARE_NODES = [
     sensor_name: "Ban Rai Farm Edge",
     thai_zone: "แนวรั้วไร่บ้านรวมไทย · จ.ประจวบคีรีขันธ์",
     en_zone: "Ban Ruam Thai Crop Buffer · Prachuap Khiri Khan",
-    content_icon: "🐘",
+    content_icon: "",
     content_role: "เฝ้าระวังช้างป่าประชิดพื้นที่เกษตรกรรม",
     content_role_en: "Human-Elephant Conflict (HEC) Crop Boundary Early Warning",
     hardware_type: "Raspberry Pi 4 + Acoustic + IR Bridge",
@@ -77,8 +88,8 @@ const HARDWARE_NODES = [
     status: "normal",
     location: { lat: 12.14, lng: 99.55 },
     telemetry: { temp_c: 27.8, humidity_rh: 71, light_lux: 510, ultrasonic_khz: 38.0 },
-    last_sound: "🐘 เฝ้าระวังด่านช้างออกไร่สับปะรด",
-    last_sound_en: "🐘 Monitoring Pineapple Farm Corridor",
+    last_sound: "เฝ้าระวังด่านช้างออกไร่สับปะรด",
+    last_sound_en: "Monitoring Pineapple Farm Corridor",
     audio_url: "audio/elephant_2.mp3",
     can_simulate: true
   },
@@ -87,7 +98,7 @@ const HARDWARE_NODES = [
     sensor_name: "Deep Forest East",
     thai_zone: "ป่าลึกทิศตะวันออก · อุทยานแห่งชาติกุยบุรี",
     en_zone: "Eastern Core Canopy · Kui Buri National Park",
-    content_icon: "🪚",
+    content_icon: "",
     content_role: "ตรวจจับเสียงเลื่อยยนต์และขบวนการลักลอบตัดไม้",
     content_role_en: "Anti-Poaching & Illegal Chainsaw Acoustic Detection",
     hardware_type: "ESP32 Canopy Acoustic Array",
@@ -97,8 +108,8 @@ const HARDWARE_NODES = [
     status: "alert",
     location: { lat: 12.2, lng: 99.58 },
     telemetry: { temp_c: 25.9, humidity_rh: 82, light_lux: 420, ultrasonic_khz: 64.2 },
-    last_sound: "🪚 เสียงเลื่อยโซ่ยนต์ตัดไม้ (AI 89%)",
-    last_sound_en: "🪚 Two-Stroke Chainsaw Signature (AI 89%)",
+    last_sound: "เสียงเลื่อยโซ่ยนต์ตัดไม้ (AI 89%)",
+    last_sound_en: "Two-Stroke Chainsaw Signature (AI 89%)",
     audio_url: "audio/chainsaw_1.wav",
     can_simulate: true
   },
@@ -107,7 +118,7 @@ const HARDWARE_NODES = [
     sensor_name: "Stream Bank",
     thai_zone: "ริมลำธารธรรมชาติ · อุทยานแห่งชาติกุยบุรี",
     en_zone: "Riparian Stream Corridor · Kui Buri National Park",
-    content_icon: "🦗",
+    content_icon: "",
     content_role: "ตรวจวัดเสียงแมลงกลางคืนและความสมบูรณ์ระบบนิเวศ",
     content_role_en: "Bio-Acoustic Biodiversity & Nocturnal Insect Baseline",
     hardware_type: "Riparian Bio-Acoustic + Lux Node",
@@ -117,8 +128,8 @@ const HARDWARE_NODES = [
     status: "normal",
     location: { lat: 12.12, lng: 99.5 },
     telemetry: { temp_c: 24.8, humidity_rh: 88, light_lux: 190, ultrasonic_khz: 58.9 },
-    last_sound: "🦗 เสียงจิ้งหรีดและลำธารปกติ (AI 97%)",
-    last_sound_en: "🦗 Normal Crickets & Stream Baseline (AI 97%)",
+    last_sound: "เสียงจิ้งหรีดและลำธารปกติ (AI 97%)",
+    last_sound_en: "Normal Crickets & Stream Baseline (AI 97%)",
     audio_url: "audio/crickets_1.wav",
     can_simulate: true
   },
@@ -127,7 +138,7 @@ const HARDWARE_NODES = [
     sensor_name: "West Corridor TrailCam",
     thai_zone: "ด่านสัตว์ป่าทิศตะวันตก · อุทยานแห่งชาติกุยบุรี",
     en_zone: "Western Wildlife Corridor · Kui Buri National Park",
-    content_icon: "📷",
+    content_icon: "",
     content_role: "กล้องดักถ่ายสัตว์ป่า AI + เซนเซอร์วัดความชื้นเสี่ยงไฟป่า",
     content_role_en: "Edge AI Camera Trap + Wildfire Microclimate Humidity Sensor",
     hardware_type: "Park Legacy CCTV + Edge AI Bridge",
@@ -137,8 +148,8 @@ const HARDWARE_NODES = [
     status: "lowbat",
     location: { lat: 12.15, lng: 99.49 },
     telemetry: { temp_c: 28.4, humidity_rh: 63, light_lux: 610, ultrasonic_khz: 31.0 },
-    last_sound: "📷 กล้องดักถ่าย AI (แจ้งเตือนแบตเตอรี่ต่ำ 19%)",
-    last_sound_en: "📷 AI TrailCam (Low Battery Warning 19%)",
+    last_sound: "กล้องดักถ่าย AI (แจ้งเตือนแบตเตอรี่ต่ำ 19%)",
+    last_sound_en: "AI TrailCam (Low Battery Warning 19%)",
     audio_url: "audio/elephant_1.mp3",
     can_simulate: false
   },
@@ -147,7 +158,7 @@ const HARDWARE_NODES = [
     sensor_name: "Canopy Ridge Bio-Sonar",
     thai_zone: "สันเขาเรือนยอดไม้ · อุทยานแห่งชาติกุยบุรี",
     en_zone: "High-Mountain Canopy Ridge · Kui Buri National Park",
-    content_icon: "🦇",
+    content_icon: "",
     content_role: "เรดาร์คลื่นอัลตราโซนิกตรวจวัดค้างคาวและชีวภาพป่า",
     content_role_en: "192kHz Ultrasonic Bat Echolocation & Canopy Richness Array",
     hardware_type: "Ultrasonic 192kHz Bat & Insect Array",
@@ -157,8 +168,8 @@ const HARDWARE_NODES = [
     status: "normal",
     location: { lat: 12.18, lng: 99.6 },
     telemetry: { temp_c: 24.2, humidity_rh: 85, light_lux: 290, ultrasonic_khz: 96.4 },
-    last_sound: "🦇 คลื่นโซนาร์ค้างคาวหนาแน่น (สมบูรณ์สูง)",
-    last_sound_en: "🦇 High Bat Echolocation Density (Rich Canopy)",
+    last_sound: "คลื่นโซนาร์ค้างคาวหนาแน่น (สมบูรณ์สูง)",
+    last_sound_en: "High Bat Echolocation Density (Rich Canopy)",
     audio_url: "audio/crickets_1.wav",
     can_simulate: false
   }
@@ -170,7 +181,7 @@ const THAILAND_NATIONAL_HUBS = [
     hub_id: "TH-KY",
     name: "อุทยานแห่งชาติเขาใหญ่ ( จ.นครราชสีมา )",
     name_en: "Khao Yai National Park (Nakhon Ratchasima)",
-    icon: "🌳",
+    icon: "",
     lat: 14.438,
     lng: 101.372,
     desc: "เครือข่ายเซนเซอร์เสียงช้างป่าและไม้พะยูง 12 โหนด · สถานะปกติ",
@@ -180,7 +191,7 @@ const THAILAND_NATIONAL_HUBS = [
     hub_id: "TH-HKK",
     name: "เขตรักษาพันธุ์สัตว์ป่าห้วยขาแข้ง ( จ.อุทัยธานี )",
     name_en: "Huai Kha Khaeng Wildlife Sanctuary (Uthai Thani)",
-    icon: "🐅",
+    icon: "",
     lat: 15.625,
     lng: 99.325,
     desc: "มรดกโลกทางธรรมชาติ · เซนเซอร์ชีวอะคูสติกและกล้องดักถ่ายเสือโคร่ง 18 โหนด",
@@ -190,7 +201,7 @@ const THAILAND_NATIONAL_HUBS = [
     hub_id: "TH-KKC",
     name: "อุทยานแห่งชาติแก่งกระจาน ( จ.เพชรบุรี )",
     name_en: "Kaeng Krachan National Park (Phetchaburi)",
-    icon: "🌿",
+    icon: "",
     lat: 12.885,
     lng: 99.632,
     desc: "กลุ่มป่าแก่งกระจาน · เชื่อมต่อระบบเฝ้าระวังไฟป่าและสัตว์ป่า 9 โหนด",
@@ -200,7 +211,7 @@ const THAILAND_NATIONAL_HUBS = [
     hub_id: "TH-DOI",
     name: "อุทยานแห่งชาติดอยอินทนนท์ ( จ.เชียงใหม่ )",
     name_en: "Doi Inthanon National Park (Chiang Mai)",
-    icon: "🌲",
+    icon: "",
     lat: 18.588,
     lng: 98.486,
     desc: "สถานีวิจัยความชื้นป่าต้นน้ำและเฝ้าระวังหมอกควัน/ไฟป่าภาคเหนือ",
@@ -210,7 +221,7 @@ const THAILAND_NATIONAL_HUBS = [
     hub_id: "TH-KS",
     name: "อุทยานแห่งชาติเขาสก ( จ.สุราษฎร์ธานี )",
     name_en: "Khao Sok National Park (Surat Thani)",
-    icon: "🐘",
+    icon: "",
     lat: 8.915,
     lng: 98.527,
     desc: "ป่าดิบชื้นภาคใต้ · เซนเซอร์วัดความหลากหลายทางเสียง (Bio-Acoustic Index)",
@@ -394,14 +405,14 @@ function escapeHtml(str) {
 function getEventIcon(eventType) {
   switch ((eventType || "").toLowerCase()) {
     case "elephant":
-      return "🐘";
+      return "";
     case "chainsaw":
-      return "🪚";
+      return "";
     case "vehicle":
-      return "🚙";
+      return "";
     case "normal":
     default:
-      return "🦗";
+      return "";
   }
 }
 
@@ -549,7 +560,7 @@ function initLanguageSwitcher() {
 
     // 2. Update header language toggle pill (Flag + TH/EN label)
     const isEn = lang === "en";
-    if (dom.langToggleFlag) dom.langToggleFlag.textContent = isEn ? "🇬🇧" : "🇹🇭";
+    if (dom.langToggleFlag) dom.langToggleFlag.textContent = "";
     if (dom.langToggleLabel) dom.langToggleLabel.textContent = isEn ? "EN" : "TH";
 
     // 3. Update map style & heatmap button labels according to active state
@@ -576,6 +587,12 @@ function initLanguageSwitcher() {
       HARDWARE_NODES.find((n) => n.node_id === selectedMapNodeId) || HARDWARE_NODES[0];
     renderSelectedNodeTelemetry(currentNode);
     renderDeviceRegistryTable();
+    renderSensorStatusTable();
+    populateStationSelect();
+    renderRangers();
+    updatePageTitle();
+    setEsgOpen(esgOpen);
+    initAnalyticsCharts();
     renderIncidentsList();
     if (activeIncidentId) {
       const activeInc = incidents.find((i) => i.id === activeIncidentId);
@@ -593,8 +610,8 @@ function initLanguageSwitcher() {
       applyLangState(nextLang);
       showToast(
         nextLang === "en"
-          ? "🇬🇧 Switched language to English (EN)"
-          : "🇹🇭 เปลี่ยนภาษาเป็น ภาษาไทย (TH) เรียบร้อยแล้ว"
+          ? "Switched language to English (EN)"
+          : "เปลี่ยนภาษาเป็น ภาษาไทย (TH) เรียบร้อยแล้ว"
       );
     });
   }
@@ -607,7 +624,7 @@ function initThemeToggle() {
   const savedTheme = localStorage.getItem("blimbloom_theme");
   if (savedTheme === "dark") {
     document.documentElement.classList.add("dark");
-    if (dom.themeToggleIcon) dom.themeToggleIcon.textContent = "☀️";
+    if (dom.themeToggleIcon) dom.themeToggleIcon.innerHTML = '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>';
   }
 
   if (dom.btnThemeToggle) {
@@ -615,7 +632,7 @@ function initThemeToggle() {
       const isDark = document.documentElement.classList.toggle("dark");
       localStorage.setItem("blimbloom_theme", isDark ? "dark" : "light");
       if (dom.themeToggleIcon) {
-        dom.themeToggleIcon.textContent = isDark ? "☀️" : "🌙";
+        dom.themeToggleIcon.innerHTML = isDark ? '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>' : '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>';
       }
     });
   }
@@ -644,8 +661,9 @@ function initLeafletGisMap() {
   thailandStreetTileLayer = L.tileLayer(
     "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
     {
-      attribution: "&copy; OpenStreetMap · Thailand Forest Conservation GIS Network",
-      maxZoom: 19
+      attribution: "&copy; OpenStreetMap contributors · Thailand Forest GIS",
+      maxZoom: 19,
+      className: "bb-basemap"
     }
   );
 
@@ -658,8 +676,12 @@ function initLeafletGisMap() {
     }
   );
 
-  // Default to clear Thailand map so province/park names in Thailand are clearly visible
+  // Real OpenStreetMap basemap (no API key needed); recolour charts on theme change
   thailandStreetTileLayer.addTo(leafletMap);
+  new MutationObserver(() => initAnalyticsCharts()).observe(document.documentElement, {
+    attributes: true,
+    attributeFilter: ["class"]
+  });
 
   // Threat Heatmap Zones (Conflict & Logging Hotspots in Kui Buri)
   const hotspotConfigs = [
@@ -667,25 +689,25 @@ function initLeafletGisMap() {
       lat: 12.16,
       lng: 99.53,
       radius: 1700,
-      color: "#dc2626",
-      fillColor: "#dc2626",
-      label: "🐘 พื้นที่เสี่ยงช้างป่าออกนอกแนวเขต · Kui Buri North Gate"
+      color: "#C87D4B",
+      fillColor: "#C87D4B",
+      label: "พื้นที่เสี่ยงช้างป่าออกนอกแนวเขต · Kui Buri North Gate"
     },
     {
       lat: 12.2,
       lng: 99.58,
       radius: 1550,
-      color: "#d97706",
-      fillColor: "#d97706",
-      label: "🪚 พื้นที่เฝ้าระวังการลักลอบตัดไม้ · Deep Forest East"
+      color: "#C87D4B",
+      fillColor: "#C87D4B",
+      label: "พื้นที่เฝ้าระวังการลักลอบตัดไม้ · Deep Forest East"
     },
     {
       lat: 12.14,
       lng: 99.55,
       radius: 1250,
-      color: "#eab308",
-      fillColor: "#eab308",
-      label: "🌾 แนวกันชนพื้นที่เกษตรกรรม · Ban Rai Farm Edge"
+      color: "#C9A86B",
+      fillColor: "#C9A86B",
+      label: "แนวกันชนพื้นที่เกษตรกรรม · Ban Rai Farm Edge"
     }
   ];
 
@@ -693,9 +715,9 @@ function initLeafletGisMap() {
     const circle = L.circle([h.lat, h.lng], {
       radius: h.radius,
       color: h.color,
-      weight: 1.5,
+      weight: 0,
       fillColor: h.fillColor,
-      fillOpacity: 0.22
+      fillOpacity: 0.16
     }).addTo(leafletMap);
     circle.bindTooltip(h.label, { direction: "top" });
     return circle;
@@ -747,11 +769,13 @@ function initLeafletGisMap() {
       isSatelliteView = !isSatelliteView;
       if (isSatelliteView) {
         leafletMap.removeLayer(thailandStreetTileLayer);
+        if (kuiBuriOverlay) leafletMap.removeLayer(kuiBuriOverlay);
         satelliteTileLayer.addTo(leafletMap);
         if (dom.mapStyleLabel) dom.mapStyleLabel.textContent = t("map_style_sat");
       } else {
         leafletMap.removeLayer(satelliteTileLayer);
         thailandStreetTileLayer.addTo(leafletMap);
+        if (kuiBuriOverlay) kuiBuriOverlay.addTo(leafletMap);
         if (dom.mapStyleLabel) dom.mapStyleLabel.textContent = t("map_style_clear");
       }
     });
@@ -779,6 +803,38 @@ function initLeafletGisMap() {
   }
 }
 
+
+// Stylized Kui Buri basemap (matches the UI design): sage forest, cream farmland,
+// dashed park boundary, reservoir. Drawn as an SVG image overlay above the tiles.
+let kuiBuriOverlay = null;
+function kuiBuriSvg(dark) {
+  const c = dark
+    ? { forest: "#1A2E24", farm: "#22382C", line: "#4C6656", water: "#21485A", contour: "#203629" }
+    : { forest: "#CFE0C8", farm: "#E9EEE4", line: "#8A9A86", water: "#B9D3E6", contour: "#C3D6BB" };
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 800" preserveAspectRatio="none">
+    <rect width="1000" height="800" fill="${c.forest}"/>
+    <path d="M0 120 C 200 90 320 160 520 130 S 860 90 1000 140" fill="none" stroke="${c.contour}" stroke-width="1.5"/>
+    <path d="M0 660 C 220 620 360 700 560 650 S 880 610 1000 660" fill="none" stroke="${c.contour}" stroke-width="1.5"/>
+    <path d="M640 0 C 690 120 760 160 860 150 L1000 140 L1000 800 L720 800 C 735 700 670 620 700 520 C 725 430 610 330 640 240 C 655 170 610 90 640 0Z" fill="${c.farm}"/>
+    <path d="M330 0 C 360 140 300 230 370 340 C 430 440 380 560 420 800" fill="none" stroke="${c.line}" stroke-width="1.6" stroke-dasharray="6 6"/>
+    <path d="M770 420 c 40 -22 88 -2 78 46 c -14 52 -86 42 -96 6 c -6 -22 2 -40 18 -52z" fill="${c.water}"/>
+  </svg>`;
+  return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
+}
+function addKuiBuriStyleOverlay(L) {
+  const bounds = [
+    [11.95, 99.25],
+    [12.37, 99.85]
+  ];
+  const dark = document.documentElement.classList.contains("dark");
+  kuiBuriOverlay = L.imageOverlay(kuiBuriSvg(dark), bounds, { opacity: 1, interactive: false, className: "bb-kuiburi-overlay" }).addTo(leafletMap);
+  new MutationObserver(() => {
+    const isDark = document.documentElement.classList.contains("dark");
+    kuiBuriOverlay?.setUrl(kuiBuriSvg(isDark));
+    initAnalyticsCharts();
+  }).observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
+}
+
 function renderLeafletMarkers() {
   if (!leafletMap || typeof window.L === "undefined") return;
   const L = window.L;
@@ -788,50 +844,30 @@ function renderLeafletMarkers() {
 
   for (const node of HARDWARE_NODES) {
     const statusClass =
-      node.status === "alert"
-        ? "marker-alert"
-        : node.status === "lowbat"
-        ? "marker-lowbat"
-        : "marker-normal";
-
-    // Contextual emoji matching the actual sensor role/event (🐘, 🪚, 🦗, 📷, 🦇)
-    const iconEmoji = node.content_icon || "🌲";
-
-    const selectedRing =
-      node.node_id === selectedMapNodeId
-        ? "outline: 3px solid #143328; transform: scale(1.14);"
-        : "";
-
+      node.status === "alert" ? "bb-pin-alert" : node.status === "lowbat" ? "bb-pin-lowbat" : "bb-pin-normal";
+    const selected = node.node_id === selectedMapNodeId;
+    const showLabel = selected || node.status !== "normal";
     const divIcon = L.divIcon({
-      className: "custom-sensor-marker",
-      html: `
-        <div class="marker-pin-wrapper">
-          <div class="marker-pin-circle ${statusClass}" style="${selectedRing}">${iconEmoji}</div>
-          <span class="marker-pin-label">${escapeHtml(node.node_id)} · ${escapeHtml(
-        node.sensor_name
-      )}</span>
-        </div>
-      `,
-      iconSize: [150, 56],
-      iconAnchor: [75, 22]
+      className: "bb-map-pin",
+      html: `<div class="bb-pin-wrap${selected ? " is-selected" : ""}">
+          <span class="bb-pin ${statusClass}"></span>
+          ${showLabel ? `<span class="bb-pin-label">${escapeHtml(node.node_id)} · ${escapeHtml(node.sensor_name)}</span>` : ""}
+        </div>`,
+      iconSize: [36, 36],
+      iconAnchor: [18, 18]
     });
 
     const marker = L.marker([node.location.lat, node.location.lng], {
-      icon: divIcon
+      icon: divIcon,
+      title: `${node.node_id} · ${node.sensor_name}`,
+      riseOnHover: true
     }).addTo(leafletMap);
 
-    const onSelect = () => {
+    marker.on("click", () => {
       selectedMapNodeId = node.node_id;
       renderSelectedNodeTelemetry(node);
       renderLeafletMarkers();
-    };
-
-    marker.on("click", onSelect);
-    marker.on("mouseover", () => {
-      selectedMapNodeId = node.node_id;
-      renderSelectedNodeTelemetry(node);
     });
-
     leafletMarkers.set(node.node_id, marker);
   }
 }
@@ -853,131 +889,68 @@ function focusMapOnNode(nodeId) {
 function renderSelectedNodeTelemetry(node) {
   if (!dom.gisNodeTelemetryCard || !node) return;
   const isEn = getCurrentLang() === "en";
-  const zoneLabel = isEn ? node.en_zone || node.thai_zone : node.thai_zone;
-  const roleLabel = isEn ? node.content_role_en || node.content_role : node.content_role;
-  const soundLabel = isEn ? node.last_sound_en || node.last_sound : node.last_sound;
-
-  const statusBadgeHtml =
+  const soundLabel = (isEn ? node.last_sound_en || node.last_sound : node.last_sound) || "";
+  const pillClass =
+    node.status === "alert" ? "bb-pill-alert" : node.status === "lowbat" ? "bb-pill-lowbat" : "bb-pill-normal";
+  const pillText =
     node.status === "alert"
-      ? `<span class="px-2.5 py-0.5 text-[11px] font-bold rounded-full bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-800">${escapeHtml(
-          t("node_status_alert")
-        )}</span>`
+      ? isEn
+        ? "Threat alert"
+        : "แจ้งเตือนภัย"
       : node.status === "lowbat"
-      ? `<span class="px-2.5 py-0.5 text-[11px] font-bold rounded-full bg-red-100 dark:bg-red-950 text-red-700 dark:text-red-300 border border-red-300 dark:border-red-800">${escapeHtml(
-          t("node_status_lowbat")
-        )} (${node.battery}%)</span>`
-      : `<span class="px-2.5 py-0.5 text-[11px] font-bold rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800">${escapeHtml(
-          t("node_status_normal")
-        )} (${node.battery}%)</span>`;
+      ? `${isEn ? "Low battery" : "แบตเตอรี่ต่ำ"} ${node.battery}%`
+      : `${isEn ? "Online" : "ออนไลน์"} ${node.battery}%`;
+  const metric = (label, value) =>
+    `<div class="bb-metric"><span class="bb-metric-label">${escapeHtml(label)}</span><span class="bb-metric-value">${escapeHtml(
+      value
+    )}</span></div>`;
 
   dom.gisNodeTelemetryCard.innerHTML = `
-    <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
-      <div class="flex items-center gap-2">
-        <span class="w-8 h-8 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-lg shadow-2xs">${
-          node.content_icon || "🌲"
-        }</span>
-        <div>
-          <div class="flex items-center gap-2">
-            <span class="text-xs font-extrabold px-2 py-0.5 rounded bg-[#143328] text-white">${escapeHtml(
-              node.node_id
-            )}</span>
-            <strong class="text-sm font-extrabold text-slate-900 dark:text-white">${escapeHtml(
-              node.sensor_name
-            )}</strong>
-          </div>
-          <span class="text-[11px] text-slate-500 dark:text-slate-400">${escapeHtml(
-            zoneLabel || ""
-          )} · GPS ${node.location.lat.toFixed(2)}°N, ${node.location.lng.toFixed(
+    <div class="bb-telemetry-head">
+      <div class="bb-telemetry-id">
+        <span class="bb-id-chip">${escapeHtml(node.node_id)}</span>
+        <span class="bb-telemetry-name">${escapeHtml(node.sensor_name)}</span>
+        <span class="bb-telemetry-meta">GPS ${node.location.lat.toFixed(2)}°N, ${node.location.lng.toFixed(
     2
-  )}°E</span>
-        </div>
+  )}°E · ${escapeHtml(node.hardware_type)}</span>
       </div>
-      ${statusBadgeHtml}
+      <span class="bb-pill ${pillClass}">${escapeHtml(pillText)}</span>
     </div>
-
-    <div class="text-xs text-slate-600 dark:text-slate-400 mb-3">
-      ${escapeHtml(t("node_role_label"))} <strong class="text-slate-800 dark:text-slate-200">${escapeHtml(
-    roleLabel || node.hardware_type
-  )}</strong> · ${escapeHtml(t("node_hw_label"))} <span class="text-[#143328] dark:text-emerald-400 font-semibold">${escapeHtml(
-    node.hardware_type
-  )}</span>
+    <div class="bb-metrics">
+      ${metric(isEn ? "Temperature" : "อุณหภูมิ", `${node.telemetry.temp_c}°C`)}
+      ${metric(isEn ? "Humidity" : "ความชื้น", `${node.telemetry.humidity_rh}% RH`)}
+      ${metric(isEn ? "Light" : "ความเข้มแสง", `${node.telemetry.light_lux} lux`)}
+      ${metric(isEn ? "Ultrasonic" : "อัลตราโซนิก", `${node.telemetry.ultrasonic_khz} kHz`)}
     </div>
-
-    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-3 text-center mb-3">
-      <div>
-        <span class="block text-[10px] font-bold uppercase tracking-wider text-slate-400">${escapeHtml(
-          t("node_temp_label")
-        )}</span>
-        <strong class="text-sm font-extrabold text-slate-900 dark:text-white">${
-          node.telemetry.temp_c
-        }°C</strong>
-      </div>
-      <div>
-        <span class="block text-[10px] font-bold uppercase tracking-wider text-slate-400">${escapeHtml(
-          t("node_rh_label")
-        )}</span>
-        <strong class="text-sm font-extrabold text-sky-600 dark:text-sky-400">${
-          node.telemetry.humidity_rh
-        }% RH</strong>
-      </div>
-      <div>
-        <span class="block text-[10px] font-bold uppercase tracking-wider text-slate-400">${escapeHtml(
-          t("node_lux_label")
-        )}</span>
-        <strong class="text-sm font-extrabold text-amber-600 dark:text-amber-400">${
-          node.telemetry.light_lux
-        } Lux</strong>
-      </div>
-      <div>
-        <span class="block text-[10px] font-bold uppercase tracking-wider text-slate-400">${escapeHtml(
-          t("node_ultra_label")
-        )}</span>
-        <strong class="text-sm font-extrabold text-purple-600 dark:text-purple-400">${
-          node.telemetry.ultrasonic_khz
-        } kHz</strong>
-      </div>
-    </div>
-
-    <div class="flex flex-wrap items-center justify-between gap-2 text-xs">
-      <span class="text-slate-600 dark:text-slate-300">${escapeHtml(
-        t("node_last_sound")
-      )} <strong class="text-[#143328] dark:text-emerald-400">${escapeHtml(
-    soundLabel
-  )}</strong></span>
-      <div class="flex items-center gap-2">
-        <button type="button" id="btnMapPlayAudio" class="px-3 py-1.5 rounded-lg bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-700 text-xs font-bold transition">
-          ${escapeHtml(t("btn_listen_sensor"))}
-        </button>
+    <div class="bb-telemetry-foot">
+      <span class="bb-telemetry-sound">${isEn ? "Latest audio" : "เสียงล่าสุด"}: ${escapeHtml(soundLabel.trim())}</span>
+      <div class="bb-telemetry-actions">
+        <button type="button" id="btnMapPlayAudio" class="bb-btn bb-btn-ghost bb-btn-md">${
+          isEn ? "Play sensor audio" : "ฟังเสียงจากเซนเซอร์"
+        }</button>
         ${
           node.can_simulate
-            ? `<button type="button" id="btnMapTriggerNode" class="px-3 py-1.5 rounded-lg bg-[#143328] hover:bg-[#1B4332] dark:bg-emerald-600 text-white text-xs font-bold shadow-2xs transition">
-                ${escapeHtml(t("btn_trigger_gemini"))}
-              </button>`
+            ? `<button type="button" id="btnMapTriggerNode" class="bb-btn bb-btn-primary bb-btn-md">${
+                isEn ? "Send to Gemini" : "ส่งให้ Gemini วิเคราะห์"
+              }</button>`
             : ""
         }
       </div>
-    </div>
-  `;
+    </div>`;
 
-  const playBtn = document.getElementById("btnMapPlayAudio");
-  if (playBtn) {
-    playBtn.addEventListener("click", () => {
-      playAudioClipOutLoud(node.audio_url);
-      showToast(
-        isEn
-          ? `Playing live sensor audio from ${node.node_id} (${node.sensor_name})`
-          : `กำลังเล่นเสียงจริงจากโหนด ${node.node_id} (${node.sensor_name})`
-      );
-    });
-  }
-
+  document.getElementById("btnMapPlayAudio")?.addEventListener("click", () => {
+    playAudioClipOutLoud(node.audio_url);
+    showToast(
+      isEn
+        ? `Playing live sensor audio from ${node.node_id} (${node.sensor_name})`
+        : `กำลังเล่นเสียงจริงจากโหนด ${node.node_id} (${node.sensor_name})`
+    );
+  });
   const triggerBtn = document.getElementById("btnMapTriggerNode");
   if (triggerBtn && node.can_simulate) {
     triggerBtn.addEventListener("click", () => {
       const matchingSensor = SENSORS.find((s) => s.sensor_id === node.node_id);
-      if (matchingSensor) {
-        handleSimulateSensor(matchingSensor);
-      }
+      if (matchingSensor) handleSimulateSensor(matchingSensor);
     });
   }
 }
@@ -987,108 +960,57 @@ function renderSelectedNodeTelemetry(node) {
 // ----------------------------------------------------------------------------
 function renderDeviceRegistryTable() {
   if (!dom.deviceRegistryTableBody) return;
-  dom.deviceRegistryTableBody.innerHTML = "";
   const isEn = getCurrentLang() === "en";
 
-  for (const node of HARDWARE_NODES) {
-    const tr = document.createElement("tr");
-    tr.className =
-      "hover:bg-slate-50/90 dark:hover:bg-slate-800/50 transition";
-
-    const statusBadge =
-      node.status === "alert"
-        ? `<span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-800">${escapeHtml(
-            t("node_status_alert")
-          )}</span>`
-        : node.status === "lowbat"
-        ? `<span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-red-100 dark:bg-red-950 text-red-700 dark:text-red-300 border border-red-300 dark:border-red-800">${escapeHtml(
-            t("node_status_lowbat")
-          )}</span>`
-        : `<span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800">${escapeHtml(
-            t("node_status_normal")
-          )}</span>`;
-
-    const batteryColor =
-      node.battery < 30
-        ? "bg-red-500"
-        : node.battery < 75
-        ? "bg-amber-500"
-        : "bg-emerald-500";
-
-    const modalitiesHtml = node.modalities
-      .map(
-        (m) =>
-          `<span class="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-[11px] font-medium text-slate-700 dark:text-slate-300">${escapeHtml(
-            m
-          )}</span>`
-      )
-      .join(" ");
-
+  dom.deviceRegistryTableBody.innerHTML = HARDWARE_NODES.map((node) => {
     const zoneText = isEn ? node.en_zone || node.thai_zone : node.thai_zone;
+    const low = node.battery < 25;
+    const pillClass =
+      node.status === "alert" ? "bb-pill-alert" : node.status === "lowbat" ? "bb-pill-lowbat" : "bb-pill-normal";
+    const action = node.can_simulate
+      ? `<button type="button" class="bb-btn bb-btn-primary bb-btn-sm btn-table-simulate" data-sensor-id="${escapeHtml(
+          node.node_id
+        )}">${isEn ? "Test audio" : "ทดสอบเสียง"}</button>`
+      : `<button type="button" class="bb-btn bb-btn-ghost bb-btn-sm btn-table-focus" data-node-id="${escapeHtml(
+          node.node_id
+        )}">${isEn ? "View on map" : "ดูบนแผนที่"}</button>`;
+    return `<tr>
+      <td><span class="bb-cell-title">${escapeHtml(node.node_id)} · ${escapeHtml(node.sensor_name)}</span><span class="bb-cell-sub">${escapeHtml(
+      zoneText || ""
+    )}</span></td>
+      <td>${escapeHtml(node.hardware_type)}</td>
+      <td class="bb-dim">${escapeHtml(node.modalities.join(" · "))}</td>
+      <td class="bb-mono">${escapeHtml(node.protocol)}</td>
+      <td class="bb-nowrap"><span class="bb-bar${low ? " is-low" : ""}"><span style="width:${Number(node.battery) || 0}%"></span></span>${escapeHtml(
+      String(node.battery)
+    )}%</td>
+      <td><span class="bb-pill ${pillClass}">${escapeHtml(nodeStatusLabel(node.status))}</span></td>
+      <td>${action}</td>
+    </tr>`;
+  }).join("");
 
-    tr.innerHTML = `
-      <td class="py-3.5 px-4">
-        <div class="font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
-          <span>${node.content_icon || "🌲"}</span>
-          <span>${escapeHtml(node.node_id)} · ${escapeHtml(node.sensor_name)}</span>
-        </div>
-        <div class="text-[11px] text-slate-500 dark:text-slate-400">${escapeHtml(
-          zoneText || ""
-        )}</div>
-      </td>
-      <td class="py-3.5 px-4 text-slate-700 dark:text-slate-200 font-medium">${escapeHtml(
-        node.hardware_type
-      )}</td>
-      <td class="py-3.5 px-4"><div class="flex flex-wrap gap-1">${modalitiesHtml}</div></td>
-      <td class="py-3.5 px-4 font-mono text-[11px] text-[#143328] dark:text-emerald-400 font-semibold">${escapeHtml(
-        node.protocol
-      )}</td>
-      <td class="py-3.5 px-4">
-        <div class="flex items-center gap-2">
-          <div class="w-16 h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
-            <div class="h-full ${batteryColor}" style="width: ${node.battery}%"></div>
-          </div>
-          <span class="font-bold text-slate-700 dark:text-slate-200">${node.battery}%</span>
-        </div>
-      </td>
-      <td class="py-3.5 px-4">${statusBadge}</td>
-      <td class="py-3.5 px-4 text-right">
-        ${
-          node.can_simulate
-            ? `<button type="button" class="btn-table-simulate px-3 py-1.5 rounded-lg bg-[#143328] hover:bg-[#1B4332] text-white font-bold text-xs transition shadow-2xs" data-sensor-id="${escapeHtml(
-                node.node_id
-              )}">
-                ${escapeHtml(t("tbl_btn_sim"))}
-              </button>`
-            : `<button type="button" class="btn-table-focus px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 font-semibold text-xs transition" data-node-id="${escapeHtml(
-                node.node_id
-              )}">
-                ${escapeHtml(t("tbl_btn_map"))}
-              </button>`
-        }
-      </td>
-    `;
-
-    dom.deviceRegistryTableBody.appendChild(tr);
-  }
-
-  dom.deviceRegistryTableBody
-    .querySelectorAll(".btn-table-simulate")
-    .forEach((btn) => {
-      btn.addEventListener("click", () => {
-        const sensor = SENSORS.find((s) => s.sensor_id === btn.dataset.sensorId);
-        if (sensor) handleSimulateSensor(sensor);
-      });
+  dom.deviceRegistryTableBody.querySelectorAll(".btn-table-simulate").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const sensor = SENSORS.find((s) => s.sensor_id === btn.dataset.sensorId);
+      if (sensor) handleSimulateSensor(sensor);
     });
-
-  dom.deviceRegistryTableBody
-    .querySelectorAll(".btn-table-focus")
-    .forEach((btn) => {
-      btn.addEventListener("click", () => {
-        switchActivePage("map-alerts");
-        focusMapOnNode(btn.dataset.nodeId);
-      });
+  });
+  dom.deviceRegistryTableBody.querySelectorAll(".btn-table-focus").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      switchActivePage("map-alerts");
+      focusMapOnNode(btn.dataset.nodeId);
     });
+  });
+
+  const set = (id, v) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = v;
+  };
+  const n = HARDWARE_NODES.length;
+  set("hwStatOnline", `${n} / ${n}`);
+  set("hwStatAvgBat", `${Math.round(HARDWARE_NODES.reduce((s, x) => s + x.battery, 0) / n)}%`);
+  set("hwStatLow", String(HARDWARE_NODES.filter((x) => x.status === "lowbat").length));
+  set("hwStatAlert", String(HARDWARE_NODES.filter((x) => x.status === "alert").length));
 }
 
 // ----------------------------------------------------------------------------
@@ -1096,113 +1018,112 @@ function renderDeviceRegistryTable() {
 // ----------------------------------------------------------------------------
 function initAnalyticsCharts() {
   if (typeof window.Chart === "undefined") return;
+  const isEn = getCurrentLang() === "en";
+  const dark = document.documentElement.classList.contains("dark");
+  const C = {
+    forest: dark ? "#8FB08F" : "#143328",
+    sage: dark ? "#6C8C70" : "#6C846C",
+    earth: dark ? "#E09A66" : "#C87D4B",
+    mist: dark ? "#3E5A48" : "#A9C2A3",
+    text: dark ? "#9BB0A5" : "#5C6862",
+    grid: dark ? "rgba(155, 176, 165, 0.12)" : "rgba(92, 104, 98, 0.10)"
+  };
+  window.Chart.defaults.font.family = "Inter, 'Noto Sans Thai', sans-serif";
+  window.Chart.defaults.color = C.text;
+  window.__bbCharts = window.__bbCharts || [];
+  window.__bbCharts.forEach((c) => c.destroy());
+  window.__bbCharts = [];
 
   const ctxCorrelation = document.getElementById("multiSensorChart");
   if (ctxCorrelation) {
-    new window.Chart(ctxCorrelation, {
-      type: "line",
-      data: {
-        labels: ["00:00", "04:00", "08:00", "12:00", "16:00", "20:00", "23:59"],
-        datasets: [
-          {
-            label: "จำนวนครั้งที่ตรวจพบเสียงช้างป่า",
-            data: [4, 3, 1, 0, 2, 6, 5],
-            borderColor: "#dc2626",
-            backgroundColor: "rgba(220, 38, 38, 0.12)",
-            borderWidth: 2.5,
-            tension: 0.35,
-            fill: true,
-            yAxisID: "yEvents"
-          },
-          {
-            label: "ความชื้นสัมพัทธ์ (%RH)",
-            data: [86, 89, 78, 62, 68, 82, 85],
-            borderColor: "#0284c7",
-            borderWidth: 2,
-            borderDash: [4, 4],
-            tension: 0.35,
-            yAxisID: "yClimate"
-          },
-          {
-            label: "อุณหภูมิ (°C)",
-            data: [24.2, 23.5, 26.8, 32.4, 30.1, 26.1, 24.8],
-            borderColor: "#d97706",
-            borderWidth: 2,
-            tension: 0.35,
-            yAxisID: "yClimate"
-          }
-        ]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: {
-            labels: { color: "#64748b", font: { size: 11, weight: "600" } }
-          }
+    window.__bbCharts.push(
+      new window.Chart(ctxCorrelation, {
+        type: "line",
+        data: {
+          labels: ["00:00", "04:00", "08:00", "12:00", "16:00", "20:00", "23:59"],
+          datasets: [
+            {
+              label: isEn ? "Elephant calls detected" : "เสียงช้างที่ตรวจพบ",
+              data: [4, 3, 1, 0, 2, 6, 5],
+              borderColor: C.earth,
+              backgroundColor: dark ? "rgba(224, 154, 102, 0.12)" : "rgba(200, 125, 75, 0.10)",
+              borderWidth: 2,
+              tension: 0.4,
+              fill: true,
+              pointRadius: 0,
+              yAxisID: "yEvents"
+            },
+            {
+              label: isEn ? "Humidity (%RH)" : "ความชื้น (%RH)",
+              data: [86, 89, 78, 62, 68, 82, 85],
+              borderColor: C.forest,
+              borderWidth: 2,
+              tension: 0.4,
+              pointRadius: 0,
+              yAxisID: "yClimate"
+            },
+            {
+              label: isEn ? "Temperature (°C)" : "อุณหภูมิ (°C)",
+              data: [24.2, 23.5, 26.8, 32.4, 30.1, 26.1, 24.8],
+              borderColor: C.mist,
+              borderWidth: 2,
+              borderDash: [4, 4],
+              tension: 0.4,
+              pointRadius: 0,
+              yAxisID: "yClimate"
+            }
+          ]
         },
-        scales: {
-          x: {
-            ticks: { color: "#64748b", font: { size: 10 } },
-            grid: { color: "rgba(148, 163, 184, 0.15)" }
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: { mode: "index", intersect: false },
+          plugins: {
+            legend: {
+              position: "bottom",
+              labels: { color: C.text, boxWidth: 10, boxHeight: 10, usePointStyle: true, pointStyle: "circle", font: { size: 11 } }
+            }
           },
-          yEvents: {
-            type: "linear",
-            position: "left",
-            ticks: { color: "#dc2626", font: { size: 10 } },
-            grid: { color: "rgba(148, 163, 184, 0.15)" }
-          },
-          yClimate: {
-            type: "linear",
-            position: "right",
-            ticks: { color: "#0284c7", font: { size: 10 } },
-            grid: { drawOnChartArea: false }
+          scales: {
+            x: { ticks: { color: C.text, font: { size: 10 } }, grid: { display: false }, border: { display: false } },
+            yEvents: { position: "left", ticks: { color: C.text, font: { size: 10 } }, grid: { color: C.grid }, border: { display: false } },
+            yClimate: { position: "right", ticks: { color: C.text, font: { size: 10 } }, grid: { drawOnChartArea: false }, border: { display: false } }
           }
         }
-      }
-    });
+      })
+    );
   }
 
   const ctxModality = document.getElementById("modalityBarChart");
   if (ctxModality) {
-    new window.Chart(ctxModality, {
-      type: "bar",
-      data: {
-        labels: ["เสียง (Audio)", "ภาพ (Image)", "อัลตราโซนิก", "อุณหภูมิ", "ความชื้น", "แสง (Lux)"],
-        datasets: [
-          {
-            label: "ข้อมูลที่จัดเก็บต่อวัน (พันรายการ)",
-            data: [14.2, 4.8, 11.6, 6.2, 6.2, 5.2],
-            backgroundColor: [
-              "#143328",
-              "#0284c7",
-              "#7c3aed",
-              "#d97706",
-              "#0891b2",
-              "#ca8a04"
-            ],
-            borderRadius: 6
-          }
-        ]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: { display: false }
+    window.__bbCharts.push(
+      new window.Chart(ctxModality, {
+        type: "bar",
+        data: {
+          labels: isEn
+            ? ["Audio", "Image", "Ultrasonic", "Temp", "Humidity", "Light"]
+            : ["เสียง", "ภาพ", "อัลตราโซนิก", "อุณหภูมิ", "ความชื้น", "แสง"],
+          datasets: [
+            {
+              label: isEn ? "Data points per day (thousand)" : "ข้อมูลต่อวัน (พันรายการ)",
+              data: [14.2, 4.8, 11.6, 6.2, 6.2, 5.2],
+              backgroundColor: [C.forest, C.sage, C.forest, C.mist, C.mist, C.earth],
+              borderRadius: 8,
+              barPercentage: 0.6
+            }
+          ]
         },
-        scales: {
-          x: {
-            ticks: { color: "#64748b", font: { size: 10, weight: "600" } },
-            grid: { display: false }
-          },
-          y: {
-            ticks: { color: "#64748b", font: { size: 10 } },
-            grid: { color: "rgba(148, 163, 184, 0.15)" }
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { ticks: { color: C.text, font: { size: 11 } }, grid: { display: false }, border: { display: false } },
+            y: { ticks: { color: C.text, font: { size: 10 } }, grid: { color: C.grid }, border: { display: false } }
           }
         }
-      }
-    });
+      })
+    );
   }
 }
 
@@ -1292,12 +1213,12 @@ function generateGeminiEcosystemAnswer(questionText) {
 
   if (q.includes("ช้าง") || q.includes("elephant")) {
     if (isEn) {
-      return `🐘 <strong>Wild Elephant Intrusion Summary (Live Firestore + Multi-Sensor):</strong><br/>
+      return `<strong>Wild Elephant Intrusion Summary (Live Firestore + Multi-Sensor):</strong><br/>
 • Detected <strong>${elephantList.length} elephant vocalization events</strong> (Avg AI confidence: <strong>94%</strong>)<br/>
 • <strong>Highest Risk Sectors:</strong> <code>S01 Kui Buri North Gate</code> and <code>S02 Ban Rai Farm Edge</code> between 19:00–23:30 when relative humidity drops below 75% RH.<br/>
 • <strong>Recommended Action:</strong> Deploy rapid-response rangers to North Gate and notify Moo 4 village headman immediately.`;
     }
-    return `🐘 <strong>สรุปเหตุการณ์ช้างป่าบุกรุก (ข้อมูลสดจาก Firestore + Multi-Sensor):</strong><br/>
+    return `<strong>สรุปเหตุการณ์ช้างป่าบุกรุก (ข้อมูลสดจาก Firestore + Multi-Sensor):</strong><br/>
 • ปัจจุบันตรวจพบสัญญาณเสียงช้างป่าทั้งหมด <strong>${elephantList.length} ครั้ง</strong> (ความมั่นใจเฉลี่ย <strong>94%</strong>)<br/>
 • <strong>จุดเสี่ยงสูงสุด:</strong> <code>S01 Kui Buri North Gate</code> และ <code>S02 Ban Rai Farm Edge</code> โดยเฉพาะช่วงเวลา 19:00–23:30 น. เมื่อความชื้นในป่าลดต่ำกว่า 75% RH<br/>
 • <strong>คำแนะนำสำหรับชุดลาดตระเวน:</strong> ส่งหน่วยเคลื่อนที่เร็วไปดักที่แนวรั้วประตูกุยบุรีเหนือ และเปิดระบบแจ้งเตือนผู้ใหญ่บ้านหมู่ที่ 4 ทันทีครับ`;
@@ -1305,36 +1226,36 @@ function generateGeminiEcosystemAnswer(questionText) {
 
   if (q.includes("ความชื้น") || q.includes("ไฟป่า") || q.includes("fire") || q.includes("humidity")) {
     if (isEn) {
-      return `🔥 <strong>Low-Humidity & Wildfire Risk Forecast (7-Day Microclimate Model):</strong><br/>
+      return `<strong>Low-Humidity & Wildfire Risk Forecast (7-Day Microclimate Model):</strong><br/>
 • Multi-sensor fusion shows <strong><code>CAM-05 West Corridor</code> (28.4°C, 63% RH, 610 Lux)</strong> and <strong><code>S02 Ban Rai Farm Edge</code> (27.8°C, 71% RH)</strong> have the lowest relative humidity.<br/>
 • <strong>7-Day Outlook:</strong> 34% elevated dry-fuel risk in the western corridor. Recommend clearing firebreaks and replacing battery on <code>CAM-05</code> (currently 19%).`;
     }
-    return `🔥 <strong>วิเคราะห์ความเสี่ยงความชื้นต่ำและไฟป่า (7-Day Microclimate Forecast):</strong><br/>
+    return `<strong>วิเคราะห์ความเสี่ยงความชื้นต่ำและไฟป่า (7-Day Microclimate Forecast):</strong><br/>
 • จากการหลอมรวมข้อมูลอุณหภูมิ + ความชื้น + ความเข้มแสง พบว่าจุด <strong><code>CAM-05 West Corridor</code> (28.4°C, ความชื้น 63% RH, แสง 610 Lux)</strong> และ <strong><code>S02 Ban Rai Farm Edge</code> (27.8°C, 71% RH)</strong> มีค่าความชื้นสัมพัทธ์ต่ำสุดในพื้นที่<br/>
 • <strong>แนวโน้มสัปดาห์หน้า:</strong> มีโอกาสเกิดจุดความร้อนสะสมสูงขึ้น 34% แนะนำให้จัดทำแนวกันไฟและเปลี่ยนแบตเตอรี่ของโหนด <code>CAM-05</code> (เหลือ 19%) ครับ`;
   }
 
   if (q.includes("เลื่อยยนต์") || q.includes("ตำรวจ") || q.includes("report") || q.includes("chainsaw") || q.includes("ตัดไม้")) {
     if (isEn) {
-      return `🪚 <strong>Chainsaw Acoustic Evidence Report (For Forestry Police & DNP):</strong><br/>
+      return `<strong>Chainsaw Acoustic Evidence Report (For Forestry Police & DNP):</strong><br/>
 • <strong>Total Incidents:</strong> ${chainsawList.length} event(s) (<span class="text-red-600 dark:text-red-400 font-bold">HIGH PRIORITY</span>)<br/>
 • <strong>GPS Coordinates:</strong> Node <code>S03 Deep Forest East</code> (LAT 12.2000°N, LNG 99.5800°E)<br/>
 • <strong>Gemini AI Forensics:</strong> High-RPM two-stroke chainsaw engine harmonics confirmed (Confidence 89%) with attached WAV audio evidence. Click <strong>Export Dataset (CSV)</strong> to attach to the official investigation report.`;
     }
-    return `🪚 <strong>รายงานหลักฐานการตรวจจับเสียงเลื่อยยนต์ (สำหรับส่งตำรวจป่าไม้และกรมอุทยานฯ):</strong><br/>
+    return `<strong>รายงานหลักฐานการตรวจจับเสียงเลื่อยยนต์ (สำหรับส่งตำรวจป่าไม้และกรมอุทยานฯ):</strong><br/>
 • <strong>จำนวนเหตุการณ์:</strong> ${chainsawList.length} รายการ (ระดับความเร่งด่วน: <span class="text-red-600 dark:text-red-400 font-bold">HIGH PRIORITY</span>)<br/>
 • <strong>พิกัดเกิดเหตุ:</strong> โหนด <code>S03 Deep Forest East</code> (LAT 12.2000°N, LNG 99.5800°E)<br/>
 • <strong>ผลวิเคราะห์จาก Gemini AI:</strong> ตรวจพบคลื่นความถี่เครื่องยนต์ 2 จังหวะรอบสูงตรงกับเลื่อยโซ่ยนต์ (Confidence 89%) พร้อมไฟล์เสียงหลักฐานแนบในระบบ สามารถกดปุ่ม <strong>ดาวน์โหลด Dataset (CSV)</strong> เพื่อแนบเป็นหลักฐานดำเนินคดีได้ทันทีครับ`;
   }
 
   if (isEn) {
-    return `✨ <strong>Blimbloom Gemini Ecosystem Insight:</strong><br/>
+    return `<strong>Blimbloom Gemini Ecosystem Insight:</strong><br/>
 Across all 6 multimodal streams (Audio, Image, Ultrasonic, Temp, RH, Light), there are currently <strong>${incidents.length} recorded events</strong> (${
       incidents.filter((i) => i.urgency === "high").length
     } high-priority). The Forest Integrity Score stands at <strong>94.2/100 (142,850 tCO₂e protected)</strong>. Ask me about <em>elephants</em>, <em>chainsaw enforcement</em>, or <em>wildfire humidity risk</em>!`;
   }
 
-  return `✨ <strong>Blimbloom Gemini Ecosystem Insight:</strong><br/>
+  return `<strong>Blimbloom Gemini Ecosystem Insight:</strong><br/>
 จากการประมวลผลข้อมูล Big Data ทั้ง 6 มิติ (เสียง, ภาพ, อัลตราโซนิก, อุณหภูมิ, ความชื้น, แสง) ขณะนี้มีเหตุการณ์ในระบบทั้งหมด <strong>${incidents.length} รายการ</strong> (เหตุด่วนสูง ${
     incidents.filter((i) => i.urgency === "high").length
   } รายการ) ดัชนีความสมบูรณ์ของป่าอยู่ที่ <strong>94.2/100 (ปกป้องคาร์บอนเครดิต 142,850 tCO₂e)</strong> คุณสามารถถามเฉพาะเจาะจงเกี่ยวกับ <em>ช้างป่า</em>, <em>เลื่อยยนต์</em> หรือ <em>ความเสี่ยงไฟป่า</em> ได้เลยครับ!`;
@@ -1347,7 +1268,7 @@ function appendAiChatMessage(sender, htmlContent) {
   if (sender === "user") {
     msg.textContent = htmlContent;
   } else {
-    msg.innerHTML = `<div class="font-bold text-[#143328] dark:text-emerald-400 mb-1">✨ Blimbloom Gemini Assistant</div><div class="text-slate-700 dark:text-slate-200 leading-relaxed">${htmlContent}</div>`;
+    msg.innerHTML = `<div class="font-bold text-[#143328] dark:text-emerald-400 mb-1">Blimbloom Gemini Assistant</div><div class="text-slate-700 dark:text-slate-200 leading-relaxed">${htmlContent}</div>`;
   }
   dom.aiChatHistory.appendChild(msg);
   dom.aiChatHistory.scrollTop = dom.aiChatHistory.scrollHeight;
@@ -1474,7 +1395,7 @@ function updatePushButtonState() {
     localStorage.getItem("blimblom_push_registered") === "1"
   ) {
     dom.pushStatusTitle.textContent = "Push Alerts Enabled";
-    dom.btnEnableAlerts.textContent = "Alerts Active ✓";
+    dom.btnEnableAlerts.textContent = "Alerts Active ";
   }
 }
 
@@ -1573,15 +1494,14 @@ function renderSensorButtons() {
     btn.dataset.sensorId = sensor.sensor_id;
 
     btn.innerHTML = `
-      <span class="sensor-btn-icon" aria-hidden="true">${escapeHtml(sensor.icon)}</span>
       <div class="sensor-btn-meta">
         <div class="sensor-btn-top">
           <span class="sensor-id-tag">${escapeHtml(sensor.sensor_id)}</span>
           <span class="sensor-name-text">${escapeHtml(sensor.sensor_name)}</span>
         </div>
-        <span class="sensor-clip-hint">${escapeHtml(sensor.expected_label)} · ${escapeHtml(
-      t("sim_real_audio_tag")
-    )} (${escapeHtml(sensor.audio_url.split("/").pop())})</span>
+        <span class="sensor-clip-hint">${escapeHtml(sensor.expected_label)} · ${
+      getCurrentLang() === "en" ? "real clip" : "เสียงจริง"
+    }</span>
       </div>
     `;
 
@@ -1635,10 +1555,10 @@ async function handleSimulateSensor(sensor) {
         renderIncidentsList(previewDoc.id);
         showToast(
           getCurrentLang() === "en"
-            ? `✨ Gemini Analysis Complete: ${previewDoc.event_type.toUpperCase()} (${Math.round(
+            ? `Gemini Analysis Complete: ${previewDoc.event_type.toUpperCase()} (${Math.round(
                 previewDoc.confidence * 100
               )}% conf · ${previewDoc.urgency.toUpperCase()})`
-            : `✨ Gemini วิเคราะห์สำเร็จ: ${previewDoc.event_type.toUpperCase()} (ความมั่นใจ ${Math.round(
+            : `Gemini วิเคราะห์สำเร็จ: ${previewDoc.event_type.toUpperCase()} (ความมั่นใจ ${Math.round(
                 previewDoc.confidence * 100
               )}% · ระดับ ${previewDoc.urgency.toUpperCase()})`,
           {
@@ -1770,7 +1690,9 @@ function updateFilterCountsAndKpis() {
       incidents.reduce((acc, cur) => acc + formatConfidencePercent(cur.confidence), 0) /
       incidents.length;
     dom.kpiAvgConfidence.textContent = `${Math.round(avg)}%`;
+    setRing(ui.kpiRingConfidence, avg);
   }
+  renderDerivedViews();
 }
 
 function renderIncidentsList(newlyAddedId = null) {
@@ -1779,7 +1701,7 @@ function renderIncidentsList(newlyAddedId = null) {
   const isEn = getCurrentLang() === "en";
 
   const filtered = getFilteredIncidents();
-  dom.incidentCountBadge.textContent = String(filtered.length);
+  dom.incidentCountBadge.textContent = String(incidents.filter((i) => (i.status || "new").toLowerCase() === "new").length);
 
   if (filtered.length === 0) {
     dom.incidentsEmpty.classList.remove("hidden");
@@ -1789,6 +1711,7 @@ function renderIncidentsList(newlyAddedId = null) {
 
   dom.incidentsEmpty.classList.add("hidden");
   dom.incidentsList.innerHTML = "";
+  let actionsShown = false;
 
   for (const inc of filtered) {
     const urgencyKey = getUrgencyClass(inc.urgency);
@@ -1796,7 +1719,7 @@ function renderIncidentsList(newlyAddedId = null) {
     const confPct = formatConfidencePercent(inc.confidence);
 
     const row = document.createElement("div");
-    row.className = `incident-row urgency-border-${urgencyKey}${
+    row.className = `bb-inc${
       inc.id === newlyAddedId ? " new-incident-flash" : ""
     }`;
     row.setAttribute("role", "listitem");
@@ -1808,84 +1731,39 @@ function renderIncidentsList(newlyAddedId = null) {
     const primaryAlert = isEn ? previewTextEn : previewTextTh || previewTextEn;
     const secondaryAlert = isEn ? previewTextTh : previewTextEn;
 
+    const title = String(inc.event_type || "unknown");
+    const showActions = !actionsShown && statusKey !== "resolved";
+    if (showActions) actionsShown = true;
+    const sBtn = (st, label) =>
+      `<button type="button" class="bb-btn ${statusKey === st ? "bb-btn-primary" : "bb-btn-ghost"} bb-btn-xs bb-inc-status" data-status="${st}">${escapeHtml(label)}</button>`;
     row.innerHTML = `
-      <div class="row-top">
-        <div class="row-event-group">
-          <span class="event-icon" aria-hidden="true">${getEventIcon(inc.event_type)}</span>
-          <span class="event-type-label">${escapeHtml(inc.event_type || "unknown")}</span>
-          <span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-[#F3F8F5] dark:bg-emerald-950 text-[#143328] dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
-            AI ${confPct}%
-          </span>
-        </div>
-        <div class="row-badges">
-          <span class="status-badge status-${escapeHtml(statusKey)}">${escapeHtml(
-      formatStatusLabel(statusKey)
-    )}</span>
-          <span class="urgency-badge urgency-${urgencyKey}">${escapeHtml(urgencyKey)}</span>
-        </div>
+      <div class="bb-inc-top">
+        <span class="bb-inc-title">${escapeHtml(title.charAt(0).toUpperCase() + title.slice(1))}</span>
+        <span class="bb-inc-badges">
+          ${statusKey !== "new" ? `<span class="bb-pill bb-pill-status">${escapeHtml(formatStatusLabel(statusKey))}</span>` : ""}
+          <span class="bb-pill ${urgencyKey === "high" ? "bb-pill-lowbat" : urgencyKey === "medium" ? "bb-pill-alert" : "bb-pill-normal"}">${escapeHtml(urgencyKey.toUpperCase())}</span>
+          <span class="bb-pill bb-pill-ai">AI ${confPct}%</span>
+        </span>
       </div>
-
-      <div class="row-meta">
-        <span class="font-semibold text-slate-700 dark:text-slate-300">📍 ${escapeHtml(
-          inc.sensor_id ? `${inc.sensor_id} · ` : ""
-        )}${escapeHtml(inc.sensor_name || "Unknown Sensor")}</span>
-        <span class="text-slate-500 dark:text-slate-400" data-ts="${
-          timestampToMillis(inc.created_at) || ""
-        }">${escapeHtml(formatRelativeTime(inc.created_at))}</span>
-      </div>
-
-      <p class="row-preview font-semibold">${escapeHtml(primaryAlert)}</p>
-      ${
-        secondaryAlert && secondaryAlert !== primaryAlert
-          ? `<p class="row-preview-th">${escapeHtml(secondaryAlert)}</p>`
-          : ""
-      }
-
-      <div class="row-actions-bar">
-        <button type="button" class="btn-inline-audio px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 text-xs font-semibold transition">
-          ${escapeHtml(t("btn_evidence_audio"))}
-        </button>
-        <div class="flex items-center gap-1.5">
-          ${
-            statusKey === "new"
-              ? `<button type="button" class="btn-inline-ack px-3 py-1 rounded-lg bg-[#143328] hover:bg-[#1B4332] dark:bg-emerald-600 text-white text-xs font-bold transition shadow-2xs">
-                  ${escapeHtml(t("btn_ack_short"))}
-                </button>`
-              : `<span class="text-xs text-[#143328] dark:text-emerald-400 font-bold">✓ ${escapeHtml(
-                  formatStatusLabel(statusKey)
-                )}</span>`
-          }
-          <button type="button" class="btn-inline-detail px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 text-xs font-semibold transition">
-            ${escapeHtml(t("btn_details"))}
-          </button>
-        </div>
-      </div>
+      <span class="bb-inc-meta">${escapeHtml(inc.sensor_id ? `${inc.sensor_id} · ` : "")}${escapeHtml(inc.sensor_name || "Unknown sensor")} · <span data-ts="${
+        timestampToMillis(inc.created_at) || ""
+      }">${escapeHtml(formatRelativeTime(inc.created_at))}</span></span>
+      ${showActions ? `<p class="bb-inc-msg">${escapeHtml(primaryAlert)}</p>
+      <div class="bb-inc-actions">
+        ${sBtn("acknowledged", isEn ? "Acknowledge" : "รับทราบ")}
+        ${sBtn("en_route", isEn ? "En route" : "กำลังเดินทาง")}
+        ${sBtn("resolved", isEn ? "Resolved" : "แก้ไขแล้ว")}
+      </div>` : ""}
     `;
-
-    // Inline Evidence Audio button
-    const audioBtn = row.querySelector(".btn-inline-audio");
-    if (audioBtn) {
-      audioBtn.addEventListener("click", (e) => {
+    void secondaryAlert;
+    row.querySelectorAll(".bb-inc-status").forEach((b) =>
+      b.addEventListener("click", (e) => {
         e.stopPropagation();
-        playAudioClipOutLoud(inc.audio_url);
-        showToast(
-          isEn
-            ? `Playing evidence audio: ${inc.audio_url}`
-            : `กำลังเล่นเสียงหลักฐาน: ${inc.audio_url}`
-        );
-      });
-    }
+        handleUpdateIncidentStatus(inc.id, b.dataset.status);
+      })
+    );
 
-    // Inline 1-tap Acknowledge button
-    const ackBtn = row.querySelector(".btn-inline-ack");
-    if (ackBtn) {
-      ackBtn.addEventListener("click", (e) => {
-        e.stopPropagation();
-        handleUpdateIncidentStatus(inc.id, "acknowledged");
-      });
-    }
-
-    // Clicking row or Details button opens full Incident Detail screen
+    // Clicking a card opens the full Incident Detail screen
     row.addEventListener("click", () => openIncidentDetail(inc.id, true));
     row.addEventListener("keydown", (e) => {
       if (e.key === "Enter" || e.key === " ") {
@@ -1938,7 +1816,7 @@ async function openIncidentDetail(incidentId, pushHistory = true) {
   if (!inc) {
     dom.detailCard.innerHTML = `
       <div class="empty-state">
-        <div class="empty-icon">⚠️</div>
+        <div class="empty-icon"></div>
         <h3 class="empty-title">Incident Not Found</h3>
         <p class="empty-desc">Could not find incident with ID <code>${escapeHtml(
           incidentId
@@ -2168,71 +2046,1080 @@ function closeIncidentDetail(pushHistory = true) {
 }
 
 // ----------------------------------------------------------------------------
-// Clean 4-Page Navigation Switcher (Zero Clutter)
+// REDESIGN · Sidebar pages (Dashboard / Map & Alerts / Data Analysis / Sensors /
+// Ranger App / Settings), live stats, rangers registry (Firestore "rangers")
 // ----------------------------------------------------------------------------
-function switchActivePage(view) {
-  const buttons = document.querySelectorAll(".nav-view-btn");
-  buttons.forEach((b) => {
-    if (b.dataset.view === view) {
-      b.classList.add("active");
-    } else {
-      b.classList.remove("active");
-    }
+const ui = {
+  sectionDashboard: document.getElementById("sectionDashboard"),
+  sectionDataAnalysis: document.getElementById("sectionDataAnalysis"),
+  sectionSettings: document.getElementById("sectionSettings"),
+  dashMapSlot: document.getElementById("dashMapSlot"),
+  mapPageMapSlot: document.getElementById("mapPageMapSlot"),
+  pageEyebrow: document.getElementById("pageEyebrow"),
+  pageTitle: document.getElementById("pageTitle"),
+  pageClock: document.getElementById("pageClock"),
+  sideAlertBadge: document.getElementById("sideAlertBadge"),
+  statOnline: document.getElementById("statOnline"),
+  statHigh: document.getElementById("statHigh"),
+  statPending: document.getElementById("statPending"),
+  statRangers: document.getElementById("statRangers"),
+  sensorStatusBody: document.getElementById("sensorStatusBody"),
+  rangersOnDutyList: document.getElementById("rangersOnDutyList"),
+  rangersAllList: document.getElementById("rangersAllList"),
+  rangersCount: document.getElementById("rangersCount"),
+  kpiRingConfidence: document.getElementById("kpiRingConfidence"),
+  btnHeaderSettings: document.getElementById("btnHeaderSettings"),
+  daSensorChips: document.getElementById("daSensorChips"),
+  daProfileInfo: document.getElementById("daProfileInfo"),
+  daProfileRings: document.getElementById("daProfileRings"),
+  daProfileSide: document.getElementById("daProfileSide"),
+  daActivityChart: document.getElementById("daActivityChart"),
+  daEventBody: document.getElementById("daEventBody"),
+  btnDaExport: document.getElementById("btnDaExport"),
+  rangerForm: document.getElementById("rangerForm"),
+  rangerAvatar: document.getElementById("rangerAvatar"),
+  rangerSaveStatus: document.getElementById("rangerSaveStatus"),
+  rangerName: document.getElementById("rangerName"),
+  rangerPhone: document.getElementById("rangerPhone"),
+  rangerRole: document.getElementById("rangerRole"),
+  rangerAgency: document.getElementById("rangerAgency"),
+  rangerStation: document.getElementById("rangerStation"),
+  rangerLine: document.getElementById("rangerLine"),
+  rangerOnDuty: document.getElementById("rangerOnDuty"),
+  rangerFormError: document.getElementById("rangerFormError"),
+  btnRangerSave: document.getElementById("btnRangerSave"),
+  btnRangerReset: document.getElementById("btnRangerReset"),
+  prefLang: document.getElementById("prefLang"),
+  prefTheme: document.getElementById("prefTheme"),
+  prefPush: document.getElementById("prefPush")
+};
+
+const VIEWS = ["dashboard", "map-alerts", "analytics", "hardware", "mobile-ranger", "settings"];
+let currentView = "dashboard";
+let rangers = [];
+let rangersUnsub = null;
+let selectedDaSensorId = "S01";
+const RANGER_ID_KEY = "blimbloom_ranger_id";
+const DEMO_RANGERS_KEY = "blimbloom_demo_rangers";
+const RING_C = 201.06; // circumference of r=32 ring
+
+const PAGE_META = {
+  dashboard: {
+    eyebrow: { th: "อุทยานแห่งชาติกุยบุรี · 6 โหนด", en: "Kui Buri National Park · 6 nodes" },
+    title: { th: "ภาพรวม", en: "Overview" }
+  },
+  "map-alerts": {
+    eyebrow: { th: "เรียลไทม์ · Firestore", en: "Real-time · Firestore" },
+    title: { th: "แผนที่ & แจ้งเตือน", en: "Map & Alerts" }
+  },
+  analytics: {
+    eyebrow: { th: "ข้อมูลวิจัย · รายเซนเซอร์", en: "Research data · per sensor" },
+    title: { th: "วิเคราะห์ข้อมูล", en: "Data Analysis" }
+  },
+  hardware: {
+    eyebrow: { th: "อุปกรณ์และสถานะคลาวด์", en: "Device & cloud health" },
+    title: { th: "เซนเซอร์", en: "Sensors" }
+  },
+  "mobile-ranger": {
+    eyebrow: { th: "ปฏิบัติการภาคสนาม", en: "Field response" },
+    title: { th: "แอปเจ้าหน้าที่", en: "Ranger App" }
+  },
+  settings: {
+    eyebrow: { th: "บัญชีและข้อมูลติดต่อ", en: "Account & contact" },
+    title: { th: "ตั้งค่า", en: "Settings" }
+  }
+};
+
+function lang2(obj) {
+  return getCurrentLang() === "en" ? obj.en : obj.th;
+}
+
+function updatePageTitle() {
+  const meta = PAGE_META[currentView] || PAGE_META.dashboard;
+  if (ui.pageEyebrow) ui.pageEyebrow.textContent = lang2(meta.eyebrow);
+  if (ui.pageTitle) ui.pageTitle.textContent = lang2(meta.title);
+  updatePageClock();
+}
+
+function updatePageClock() {
+  if (!ui.pageClock) return;
+  const locale = getCurrentLang() === "en" ? "en-GB" : "th-TH";
+  ui.pageClock.textContent = new Date().toLocaleString(locale, {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZone: "Asia/Bangkok"
   });
+}
 
-  const mobileRangerBanner = document.getElementById("mobileRangerAppBanner");
-  closeIncidentDetail(true);
+function placeMapCard(slot) {
+  if (!slot || !dom.mapColumnCard) return;
+  if (dom.mapColumnCard.parentElement !== slot) {
+    slot.appendChild(dom.mapColumnCard);
+  }
+  setTimeout(() => leafletMap?.invalidateSize(), 120);
+}
 
-  if (view === "map-alerts") {
-    mobileRangerBanner?.classList.add("hidden");
-    dom.kpiSummarySection?.classList.remove("hidden");
-    dom.sectionMapAndAlerts?.classList.remove("hidden");
-    dom.mapColumnCard?.classList.remove("hidden");
-    dom.alertColumnCard?.classList.remove("hidden");
-    dom.alertColumnCard?.classList.remove("lg:col-span-12", "max-w-xl", "mx-auto", "w-full");
-    dom.alertColumnCard?.classList.add("lg:col-span-5");
-    dom.sectionAnalytics?.classList.add("hidden");
-    dom.sectionHardware?.classList.add("hidden");
-    setTimeout(() => leafletMap?.invalidateSize(), 120);
-  } else if (view === "analytics") {
-    mobileRangerBanner?.classList.add("hidden");
-    dom.kpiSummarySection?.classList.remove("hidden");
-    dom.sectionMapAndAlerts?.classList.add("hidden");
-    dom.sectionAnalytics?.classList.remove("hidden");
-    dom.sectionHardware?.classList.add("hidden");
-  } else if (view === "hardware") {
-    mobileRangerBanner?.classList.add("hidden");
-    dom.kpiSummarySection?.classList.add("hidden");
-    dom.sectionMapAndAlerts?.classList.add("hidden");
-    dom.sectionAnalytics?.classList.add("hidden");
-    dom.sectionHardware?.classList.remove("hidden");
-  } else if (view === "mobile-ranger") {
-    // Focused Mobile Ranger App View (Page B on iPhone / Android)
-    mobileRangerBanner?.classList.remove("hidden");
-    dom.kpiSummarySection?.classList.add("hidden");
-    dom.simulatorDrawer?.classList.add("hidden");
-    dom.sectionMapAndAlerts?.classList.remove("hidden");
-    dom.mapColumnCard?.classList.add("hidden");
-    dom.alertColumnCard?.classList.remove("hidden", "lg:col-span-5");
-    dom.alertColumnCard?.classList.add("lg:col-span-12", "max-w-xl", "mx-auto", "w-full");
-    dom.sectionAnalytics?.classList.add("hidden");
-    dom.sectionHardware?.classList.add("hidden");
+function setRing(circle, pct) {
+  if (!circle) return;
+  const p = Math.max(0, Math.min(100, Number(pct) || 0));
+  circle.setAttribute("stroke-dasharray", `${((p / 100) * RING_C).toFixed(1)} ${RING_C}`);
+}
+
+function ringSvg(pct, text, label, earth = false) {
+  const p = Math.max(0, Math.min(100, Number(pct) || 0));
+  const dash = ((p / 100) * RING_C).toFixed(1);
+  return `<svg class="bb-ring" viewBox="0 0 84 84" role="img" aria-label="${escapeHtml(label)}: ${escapeHtml(text)}">
+    <circle class="bb-ring-track" cx="42" cy="42" r="32"></circle>
+    <circle class="bb-ring-val${earth ? " bb-ring-earth" : ""}" cx="42" cy="42" r="32" stroke-dasharray="${dash} ${RING_C}" transform="rotate(-90 42 42)"></circle>
+    <text x="42" y="47" text-anchor="middle" class="bb-ring-text">${escapeHtml(text)}</text>
+  </svg>`;
+}
+
+function nodeStatusLabel(status) {
+  const isEn = getCurrentLang() === "en";
+  if (status === "alert") return isEn ? "Alert" : "แจ้งเตือนภัย";
+  if (status === "lowbat") return isEn ? "Low battery" : "แบตเตอรี่ต่ำ";
+  return isEn ? "Normal" : "ปกติ";
+}
+
+// ---------- Live stats (map page) + sidebar badge ----------
+function renderLiveStats() {
+  const highCount = incidents.filter((i) => getUrgencyClass(i.urgency) === "high").length;
+  const pending = incidents.filter((i) => (i.status || "new").toLowerCase() !== "resolved").length;
+  const newCount = incidents.filter((i) => (i.status || "new").toLowerCase() === "new").length;
+  const onDuty = rangers.filter((r) => r.on_duty !== false).length;
+  if (ui.statOnline) ui.statOnline.textContent = `${HARDWARE_NODES.length} / ${HARDWARE_NODES.length}`;
+  if (ui.statHigh) ui.statHigh.textContent = String(highCount);
+  if (ui.statPending) ui.statPending.textContent = String(pending);
+  if (ui.statRangers) ui.statRangers.textContent = String(onDuty);
+  if (ui.sideAlertBadge) {
+    ui.sideAlertBadge.textContent = String(newCount);
+    ui.sideAlertBadge.classList.toggle("is-zero", newCount === 0);
   }
 }
 
-function initSectionViewSwitcher() {
-  const buttons = document.querySelectorAll(".nav-view-btn");
-  buttons.forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const view = btn.dataset.view || "map-alerts";
-      switchActivePage(view);
+// ---------- Sensor status table (map page) ----------
+function renderSensorStatusTable() {
+  if (!ui.sensorStatusBody) return;
+  ui.sensorStatusBody.innerHTML = HARDWARE_NODES.map((n) => {
+    const low = n.battery < 25;
+    return `<tr>
+      <td class="bb-strong">${escapeHtml(n.node_id)}</td>
+      <td>${escapeHtml(n.sensor_name)}</td>
+      <td class="bb-dim">${escapeHtml(n.hardware_type)}</td>
+      <td><span class="bb-bar${low ? " is-low" : ""}"><span style="width:${Number(n.battery) || 0}%"></span></span>${escapeHtml(String(n.battery))}%</td>
+      <td class="bb-st-${escapeHtml(n.status)}">${escapeHtml(nodeStatusLabel(n.status))}</td>
+    </tr>`;
+  }).join("");
+}
+
+// ---------- Rangers registry ----------
+function getMyRangerId() {
+  const authUser = getAuthUser();
+  if (authUser && authUser.uid) return `r_${String(authUser.uid).replace(/[^A-Za-z0-9]/g, "").slice(0, 40)}`;
+  let id = null;
+  try {
+    id = localStorage.getItem(RANGER_ID_KEY);
+    if (!id) {
+      const rand =
+        (window.crypto && crypto.randomUUID && crypto.randomUUID().replace(/-/g, "")) ||
+        `${Date.now()}${Math.random().toString(16).slice(2)}`;
+      id = `r_${rand.slice(0, 20)}`;
+      localStorage.setItem(RANGER_ID_KEY, id);
+    }
+  } catch (_) {
+    id = id || "r_local";
+  }
+  return id;
+}
+
+function initialsOf(name) {
+  const parts = String(name || "").trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return "?";
+  const a = Array.from(parts[0])[0] || "";
+  const b = parts.length > 1 ? Array.from(parts[parts.length - 1])[0] || "" : "";
+  return (a + b).toUpperCase();
+}
+
+function stationLabel(code) {
+  if (!code) return "";
+  if (code === "HQ") return getCurrentLang() === "en" ? "Park HQ" : "ที่ทำการอุทยาน";
+  const node = HARDWARE_NODES.find((n) => n.node_id === code);
+  return node ? `${node.node_id} · ${node.sensor_name}` : code;
+}
+
+const PHONE_SVG = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2z"/></svg>`;
+
+function rangerRowHtml(r, { showCall = true, markMine = false } = {}) {
+  const isEn = getCurrentLang() === "en";
+  const mine = markMine && r.id === getMyRangerId();
+  const metaParts = [r.role, stationLabel(r.station)].filter(Boolean);
+  const duty = r.on_duty !== false ? (isEn ? "on duty" : "ปฏิบัติงาน") : isEn ? "off duty" : "ไม่ได้ปฏิบัติงาน";
+  if (markMine) metaParts.push(duty);
+  const tel = String(r.phone || "").replace(/[^0-9+]/g, "");
+  return `<div class="bb-ranger">
+    <span class="bb-avatar">${escapeHtml(initialsOf(r.name))}</span>
+    <span class="bb-ranger-text">
+      <span class="bb-ranger-name">${escapeHtml(r.name || "—")}${mine ? ` <span class="bb-muted">(${isEn ? "you" : "คุณ"})</span>` : ""}</span>
+      <span class="bb-ranger-meta">${escapeHtml(metaParts.join(" · "))}</span>
+    </span>
+    ${
+      showCall && tel
+        ? `<a class="bb-icon-btn" href="tel:${escapeHtml(tel)}" aria-label="${escapeHtml(
+            (isEn ? "Call " : "โทรหา ") + (r.name || "")
+          )}">${PHONE_SVG}</a>`
+        : ""
+    }
+    ${
+      mine
+        ? `<button type="button" class="bb-link-btn bb-edit-mine">${isEn ? "Edit" : "แก้ไข"}</button>`
+        : ""
+    }
+  </div>`;
+}
+
+function renderRangers() {
+  const isEn = getCurrentLang() === "en";
+  const sorted = [...rangers].sort((a, b) => String(a.name || "").localeCompare(String(b.name || "")));
+  const onDuty = sorted.filter((r) => r.on_duty !== false);
+  if (ui.rangersOnDutyList) {
+    ui.rangersOnDutyList.innerHTML = onDuty.length
+      ? onDuty.map((r) => rangerRowHtml(r)).join("")
+      : `<p class="bb-empty">${
+          isEn
+            ? "No rangers on duty yet. Register in Settings."
+            : "ยังไม่มีเจ้าหน้าที่ปฏิบัติงาน ลงทะเบียนได้ที่หน้าตั้งค่า"
+        }</p>`;
+  }
+  if (ui.rangersAllList) {
+    ui.rangersAllList.innerHTML = sorted.length
+      ? sorted.map((r) => rangerRowHtml(r, { showCall: false, markMine: true })).join("")
+      : `<p class="bb-empty">${isEn ? "Nobody has registered yet." : "ยังไม่มีผู้ลงทะเบียน"}</p>`;
+    ui.rangersAllList.querySelectorAll(".bb-edit-mine").forEach((b) =>
+      b.addEventListener("click", () => {
+        ui.rangerName?.focus();
+        ui.rangerForm?.scrollIntoView({ behavior: "smooth", block: "start" });
+      })
+    );
+  }
+  if (ui.rangersCount) ui.rangersCount.textContent = String(sorted.length);
+  renderLiveStats();
+  if (currentView === "mobile-ranger") renderRangerPage();
+  syncMyRangerToForm(false);
+}
+
+function readDemoRangers() {
+  try {
+    return JSON.parse(localStorage.getItem(DEMO_RANGERS_KEY) || "[]");
+  } catch (_) {
+    return [];
+  }
+}
+
+function initRangersSync() {
+  if (!db) {
+    rangers = readDemoRangers();
+    renderRangers();
+    return;
+  }
+  if (rangersUnsub) return;
+  rangersUnsub = onSnapshot(
+    collection(db, "rangers"),
+    (snap) => {
+      rangers = [];
+      snap.forEach((d) => rangers.push({ id: d.id, ...d.data() }));
+      renderRangers();
+    },
+    (err) => {
+      console.error("[Firestore] rangers listener error:", err);
+      renderRangers();
+    }
+  );
+}
+
+let rangerFormDirty = false;
+
+function syncMyRangerToForm(force) {
+  if (!ui.rangerForm) return;
+  const mine = rangers.find((r) => r.id === getMyRangerId());
+  const isEn = getCurrentLang() === "en";
+  if (ui.rangerSaveStatus) {
+    ui.rangerSaveStatus.className = `bb-badge ${mine ? "bb-badge-ok" : "bb-badge-muted"}`;
+    ui.rangerSaveStatus.textContent = mine
+      ? db
+        ? isEn
+          ? "Saved · Firestore"
+          : "บันทึกแล้ว · Firestore"
+        : isEn
+        ? "Saved · demo (this browser)"
+        : "บันทึกแล้ว · โหมดเดโม (เบราว์เซอร์นี้)"
+      : isEn
+      ? "Not registered yet"
+      : "ยังไม่ได้ลงทะเบียน";
+  }
+  const src = mine || (getAuthUser() ? getAuthProfile() : null);
+  if (!src || (rangerFormDirty && !force)) {
+    updateAvatarPreview();
+    return;
+  }
+  ui.rangerName.value = src.name || "";
+  ui.rangerPhone.value = src.phone || "";
+  ui.rangerRole.value = src.role || "";
+  ui.rangerAgency.value = src.agency || "";
+  ui.rangerStation.value = src.station || "S01";
+  ui.rangerLine.value = src.line_id || "";
+  ui.rangerOnDuty.checked = src.on_duty !== false;
+  rangerFormDirty = false;
+  updateAvatarPreview();
+}
+
+function updateAvatarPreview() {
+  if (ui.rangerAvatar && ui.rangerName) ui.rangerAvatar.textContent = initialsOf(ui.rangerName.value);
+}
+
+function populateStationSelect() {
+  if (!ui.rangerStation) return;
+  const current = ui.rangerStation.value;
+  const opts = HARDWARE_NODES.map(
+    (n) => `<option value="${escapeHtml(n.node_id)}">${escapeHtml(`${n.node_id} · ${n.sensor_name}`)}</option>`
+  );
+  opts.push(`<option value="HQ">${escapeHtml(stationLabel("HQ"))}</option>`);
+  ui.rangerStation.innerHTML = opts.join("");
+  ui.rangerStation.value = current || "S01";
+}
+
+async function handleRangerSubmit(e) {
+  e.preventDefault();
+  const isEn = getCurrentLang() === "en";
+  const name = ui.rangerName.value.trim();
+  const phone = ui.rangerPhone.value.trim();
+  const errors = [];
+  ui.rangerName.classList.toggle("is-invalid", !name);
+  if (!name) errors.push(isEn ? "Please enter your full name." : "กรุณากรอกชื่อ-นามสกุล");
+  const phoneOk = /^[0-9+\-\s()]{6,20}$/.test(phone);
+  ui.rangerPhone.classList.toggle("is-invalid", !phoneOk);
+  if (!phoneOk) errors.push(isEn ? "Please enter a valid phone number." : "กรุณากรอกเบอร์โทรให้ถูกต้อง");
+  if (errors.length) {
+    ui.rangerFormError.textContent = errors.join(" ");
+    ui.rangerFormError.classList.remove("hidden");
+    return;
+  }
+  ui.rangerFormError.classList.add("hidden");
+
+  const id = getMyRangerId();
+  const existing = rangers.find((r) => r.id === id);
+  const data = {
+    name: name.slice(0, 80),
+    phone: phone.slice(0, 20),
+    role: ui.rangerRole.value.trim().slice(0, 60),
+    agency: ui.rangerAgency.value.trim().slice(0, 80),
+    station: ui.rangerStation.value.slice(0, 20),
+    line_id: ui.rangerLine.value.trim().slice(0, 40),
+    on_duty: !!ui.rangerOnDuty.checked
+  };
+
+  ui.btnRangerSave.disabled = true;
+  try {
+    if (db) {
+      const payload = { ...data, updated_at: serverTimestamp() };
+      if (!existing) payload.created_at = serverTimestamp();
+      await setDoc(doc(db, "rangers", id), payload, { merge: true });
+    } else {
+      const list = readDemoRangers().filter((r) => r.id !== id);
+      list.push({ id, ...data });
+      localStorage.setItem(DEMO_RANGERS_KEY, JSON.stringify(list));
+      rangers = list;
+      renderRangers();
+    }
+    if (getAuthUser()) {
+      try {
+        await saveAuthProfile(data);
+      } catch (err) {
+        console.warn("[Account] profile sync failed:", err);
+      }
+    }
+    rangerFormDirty = false;
+    showToast(isEn ? "Ranger profile saved." : "บันทึกข้อมูลเจ้าหน้าที่เรียบร้อยแล้ว");
+  } catch (err) {
+    console.error("[Settings] save ranger failed:", err);
+    ui.rangerFormError.textContent =
+      (isEn ? "Could not save: " : "บันทึกไม่สำเร็จ: ") + (err.message || String(err));
+    ui.rangerFormError.classList.remove("hidden");
+  } finally {
+    ui.btnRangerSave.disabled = false;
+  }
+}
+
+// ---------- Account (login / PIN) ----------
+async function writeRangerRecord(data, isNew) {
+  const id = getMyRangerId();
+  const clean = {
+    name: String(data.name || "").slice(0, 80),
+    phone: String(data.phone || "").slice(0, 20),
+    role: String(data.role || "").slice(0, 60),
+    agency: String(data.agency || "").slice(0, 80),
+    station: String(data.station || "S01").slice(0, 20),
+    line_id: String(data.line_id || "").slice(0, 40),
+    on_duty: data.on_duty !== false
+  };
+  if (!clean.name || clean.phone.length < 6) return;
+  if (db) {
+    const payload = { ...clean, updated_at: serverTimestamp() };
+    if (isNew) payload.created_at = serverTimestamp();
+    await setDoc(doc(db, "rangers", id), payload, { merge: true });
+  } else {
+    const list = readDemoRangers().filter((r) => r.id !== id);
+    list.push({ id, ...clean });
+    localStorage.setItem(DEMO_RANGERS_KEY, JSON.stringify(list));
+    rangers = list;
+  }
+}
+
+function applyProfilePrefs(profile) {
+  if (!profile) return;
+  if ((profile.lang === "en" || profile.lang === "th") && profile.lang !== getCurrentLang()) {
+    dom.btnLangToggle?.click();
+  }
+  const isDark = document.documentElement.classList.contains("dark");
+  if ((profile.theme === "dark" && !isDark) || (profile.theme === "light" && isDark)) {
+    applyingPrefs = true;
+    dom.btnThemeToggle?.click();
+    applyingPrefs = false;
+  }
+}
+let applyingPrefs = false;
+
+async function handleAuthChange(user, profile, extra = {}) {
+  if (user && extra.registered && profile) {
+    try {
+      await writeRangerRecord(profile, true);
+    } catch (err) {
+      console.warn("[Account] ranger record failed:", err);
+    }
+  }
+  if (user) applyProfilePrefs(profile);
+  rangerFormDirty = false;
+  renderRangers();
+  syncMyRangerToForm(true);
+  renderAccountCard();
+}
+
+const KEY_SVG = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>';
+const USER_SVG = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4.5-6 8-6s7 2 8 6"/></svg>';
+
+function renderAccountCard() {
+  const isEn = getCurrentLang() === "en";
+  const user = getAuthUser();
+  const profile = getAuthProfile() || {};
+  const card = document.getElementById("accountCard");
+  const side = document.getElementById("sideAccount");
+  const name = profile.name || user?.name || user?.email || "";
+  if (side) {
+    side.innerHTML = user
+      ? `<span class="bb-avatar bb-avatar-sm">${escapeHtml(initialsOf(name))}</span><span class="bb-side-acc-text"><span class="bb-side-acc-name">${escapeHtml(
+          name
+        )}</span><span class="bb-side-acc-mail">${escapeHtml(user.email || "")}</span></span>`
+      : `${USER_SVG}<span>${isEn ? "Log in / Register" : "เข้าสู่ระบบ / สมัคร"}</span>`;
+  }
+  if (!card) return;
+  if (!user) {
+    card.innerHTML = `
+      <div class="bb-card-head"><span class="bb-card-title">${isEn ? "Account" : "บัญชีผู้ใช้"}</span><span class="bb-badge bb-badge-muted">${
+      isEn ? "Guest" : "ผู้เยี่ยมชม"
+    }</span></div>
+      <p class="bb-muted bb-acc-note">${
+        isEn
+          ? "Log in to keep your profile and settings on every device, and unlock with a 6-digit PIN."
+          : "เข้าสู่ระบบเพื่อเก็บโปรไฟล์และการตั้งค่าไว้ใช้ได้ทุกอุปกรณ์ และปลดล็อกด้วย PIN 6 หลัก"
+      }</p>
+      <div class="bb-acc-actions">
+        <button type="button" class="bb-btn bb-btn-primary bb-btn-sm" data-acc="login">${isEn ? "Log in" : "เข้าสู่ระบบ"}</button>
+        <button type="button" class="bb-btn bb-btn-ghost bb-btn-sm" data-acc="register">${isEn ? "Create account" : "สร้างบัญชี"}</button>
+      </div>`;
+  } else {
+    const pin = authHasPin();
+    card.innerHTML = `
+      <div class="bb-card-head"><span class="bb-card-title">${isEn ? "Account" : "บัญชีผู้ใช้"}</span><span class="bb-badge bb-badge-ok">${
+      isAuthDemo() ? (isEn ? "Signed in · demo" : "เข้าสู่ระบบ · เดโม") : isEn ? "Signed in · Firebase" : "เข้าสู่ระบบ · Firebase"
+    }</span></div>
+      <div class="bb-acc-user"><span class="bb-avatar">${escapeHtml(initialsOf(name))}</span><span class="bb-ranger-text"><span class="bb-ranger-name">${escapeHtml(
+        name
+      )}</span><span class="bb-ranger-meta">${escapeHtml(user.email || "")}</span></span></div>
+      <div class="bb-pref-row"><span class="bb-acc-pin">${KEY_SVG}<span>${isEn ? "Quick-unlock PIN" : "PIN ปลดล็อกด่วน"}</span><span class="bb-muted">${
+        pin ? (isEn ? "set on this device" : "ตั้งไว้ในเครื่องนี้") : isEn ? "not set" : "ยังไม่ได้ตั้ง"
+      }</span></span><button type="button" class="bb-btn bb-btn-ghost bb-btn-sm" data-acc="pin">${
+        pin ? (isEn ? "Change" : "เปลี่ยน") : isEn ? "Set PIN" : "ตั้ง PIN"
+      }</button></div>
+      <div class="bb-acc-actions">
+        ${pin ? `<button type="button" class="bb-btn bb-btn-ghost bb-btn-sm" data-acc="lock">${isEn ? "Lock now" : "ล็อกหน้าจอ"}</button>` : ""}
+        <button type="button" class="bb-btn bb-btn-ghost bb-btn-sm bb-btn-danger-text" data-acc="logout">${isEn ? "Log out" : "ออกจากระบบ"}</button>
+      </div>`;
+  }
+  card.querySelectorAll("[data-acc]").forEach((b) =>
+    b.addEventListener("click", async () => {
+      const a = b.dataset.acc;
+      if (a === "login") openAuth("login");
+      else if (a === "register") openAuth("register");
+      else if (a === "pin") openAuth("setpin");
+      else if (a === "lock") authLock();
+      else if (a === "logout") {
+        await authLogout();
+        renderAccountCard();
+      }
+    })
+  );
+}
+
+function initAccount() {
+  initAuth(firebaseApp || null, {
+    onChange: handleAuthChange,
+    toast: (m) => showToast(m),
+    stations: () => [
+      ...HARDWARE_NODES.map((n) => ({ value: n.node_id, label: `${n.node_id} · ${n.sensor_name}` })),
+      { value: "HQ", label: stationLabel("HQ") }
+    ]
+  });
+  document.getElementById("sideAccount")?.addEventListener("click", () => {
+    if (getAuthUser()) switchActivePage("settings");
+    else openAuth("login");
+  });
+  // keep language / theme in the account so they follow the user
+  dom.btnLangToggle?.addEventListener("click", () => {
+    setTimeout(() => {
+      renderAccountCard();
+      if (getAuthUser()) saveAuthProfile({ lang: getCurrentLang() }).catch(() => {});
+    }, 0);
+  });
+  dom.btnThemeToggle?.addEventListener("click", () => {
+    if (applyingPrefs || !getAuthUser()) return;
+    saveAuthProfile({ theme: document.documentElement.classList.contains("dark") ? "dark" : "light" }).catch(() => {});
+  });
+  renderAccountCard();
+}
+
+function initSettingsPage() {
+  populateStationSelect();
+  if (ui.rangerForm) {
+    ui.rangerForm.addEventListener("submit", handleRangerSubmit);
+    ui.rangerForm.addEventListener("input", () => {
+      rangerFormDirty = true;
+      updateAvatarPreview();
     });
+  }
+  ui.btnRangerReset?.addEventListener("click", () => {
+    rangerFormDirty = false;
+    ui.rangerFormError?.classList.add("hidden");
+    const mine = rangers.find((r) => r.id === getMyRangerId());
+    if (mine) {
+      syncMyRangerToForm(true);
+    } else {
+      ui.rangerForm.reset();
+      updateAvatarPreview();
+    }
+  });
+  ui.prefLang?.addEventListener("click", () => dom.btnLangToggle?.click());
+  ui.prefTheme?.addEventListener("click", () => {
+    dom.btnThemeToggle?.click();
+    syncThemeSwitch();
+  });
+  dom.btnThemeToggle?.addEventListener("click", syncThemeSwitch);
+  ui.prefPush?.addEventListener("click", handleEnableAlertsTap);
+  syncThemeSwitch();
+  updateAvatarPreview();
+}
+
+function syncThemeSwitch() {
+  if (ui.prefTheme) {
+    ui.prefTheme.setAttribute(
+      "aria-checked",
+      document.documentElement.classList.contains("dark") ? "true" : "false"
+    );
+  }
+}
+
+// ---------- Data Analysis (per sensor, from real incidents) ----------
+const EVENT_ROWS = [
+  { key: "elephant", y: 20, en: "Elephant", th: "ช้างป่า" },
+  { key: "chainsaw", y: 60, en: "Chainsaw", th: "เลื่อยยนต์" },
+  { key: "vehicle", y: 100, en: "Vehicle", th: "ยานพาหนะ" },
+  { key: "normal", y: 140, en: "Normal", th: "ปกติ" }
+];
+const EVENT_RANK = { normal: 0, vehicle: 1, chainsaw: 2, elephant: 3 };
+
+function eventKey(t) {
+  const k = String(t || "normal").toLowerCase();
+  return EVENT_RANK[k] !== undefined ? k : "normal";
+}
+
+function renderDataAnalysis() {
+  if (!ui.daSensorChips) return;
+  const isEn = getCurrentLang() === "en";
+  ui.daSensorChips.innerHTML = HARDWARE_NODES.map(
+    (n) =>
+      `<button type="button" class="bb-chip${n.node_id === selectedDaSensorId ? " active" : ""}" data-node="${escapeHtml(
+        n.node_id
+      )}" aria-pressed="${n.node_id === selectedDaSensorId}">${escapeHtml(n.node_id)}</button>`
+  ).join("");
+  ui.daSensorChips.querySelectorAll(".bb-chip").forEach((b) =>
+    b.addEventListener("click", () => {
+      selectedDaSensorId = b.dataset.node;
+      renderDataAnalysis();
+    })
+  );
+
+  const node = HARDWARE_NODES.find((n) => n.node_id === selectedDaSensorId) || HARDWARE_NODES[0];
+  const all = incidents
+    .filter((i) => i.sensor_id === node.node_id)
+    .sort((a, b) => (timestampToMillis(b.created_at) || 0) - (timestampToMillis(a.created_at) || 0));
+  const now = Date.now();
+  const start = now - 24 * 3600 * 1000;
+  const last24 = all.filter((i) => (timestampToMillis(i.created_at) || now) >= start);
+  const avgConf = all.length
+    ? Math.round(all.reduce((s, i) => s + formatConfidencePercent(i.confidence), 0) / all.length)
+    : 0;
+  const highShare = all.length
+    ? Math.round((all.filter((i) => getUrgencyClass(i.urgency) === "high").length / all.length) * 100)
+    : 0;
+
+  ui.daProfileInfo.innerHTML = `
+    <span class="bb-profile-name">${escapeHtml(node.sensor_name)}</span>
+    <span class="bb-muted">${isEn ? "Sensor ID" : "รหัสเซนเซอร์"}: ${escapeHtml(node.node_id)} · GPS ${escapeHtml(
+    `${node.location.lat.toFixed(2)}°N, ${node.location.lng.toFixed(2)}°E`
+  )}</span>
+    <span class="bb-muted">${isEn ? "Hardware" : "ฮาร์ดแวร์"}: ${escapeHtml(node.hardware_type)}</span>
+    <span class="bb-muted">${escapeHtml(isEn ? node.content_role_en : node.content_role)}</span>`;
+
+  const L = {
+    battery: isEn ? "Battery" : "แบตเตอรี่",
+    conf: isEn ? "Avg AI confidence" : "ความมั่นใจ AI เฉลี่ย",
+    inc: isEn ? "Incidents (24 h)" : "เหตุการณ์ (24 ชม.)",
+    high: isEn ? "High urgency share" : "สัดส่วนเร่งด่วน"
+  };
+  ui.daProfileRings.innerHTML = `
+    <div class="bb-ring-item">${ringSvg(node.battery, `${node.battery}%`, L.battery)}<span>${L.battery}</span></div>
+    <div class="bb-ring-item">${ringSvg(avgConf, all.length ? `${avgConf}%` : "—", L.conf)}<span>${L.conf}</span></div>
+    <div class="bb-ring-item">${ringSvg(Math.min(100, last24.length * 10), String(last24.length), L.inc, true)}<span>${L.inc}</span></div>
+    <div class="bb-ring-item">${ringSvg(highShare, all.length ? `${highShare}%` : "—", L.high, true)}<span>${L.high}</span></div>`;
+
+  const latest = all[0];
+  ui.daProfileSide.innerHTML = latest
+    ? `<span class="bb-badge bb-badge-muted">${escapeHtml(
+        (isEn ? "Latest: " : "ล่าสุด: ") + (latest.event_type || "unknown")
+      )}</span>
+       <span class="bb-muted">${isEn ? "Clips analysed" : "คลิปที่วิเคราะห์"}: ${all.length}</span>
+       <span class="bb-muted">${isEn ? "Last report" : "รายงานล่าสุด"}: ${escapeHtml(formatRelativeTime(latest.created_at))}</span>`
+    : `<span class="bb-muted">${
+        isEn
+          ? "No clips analysed for this sensor yet. Use the simulator to send one."
+          : "ยังไม่มีคลิปที่วิเคราะห์ของเซนเซอร์นี้ ลองกดจำลองเสียงเพื่อส่งคลิป"
+      }</span>`;
+
+  // 24 h step chart: highest-priority event class per hour bin
+  const bins = new Array(24).fill("normal");
+  for (const inc of last24) {
+    const ms = timestampToMillis(inc.created_at) || now;
+    const idx = Math.min(23, Math.max(0, Math.floor((ms - start) / 3600000)));
+    const k = eventKey(inc.event_type);
+    if (EVENT_RANK[k] > EVENT_RANK[bins[idx]]) bins[idx] = k;
+  }
+  const X0 = 80;
+  const W = 960;
+  const step = W / 24;
+  const yOf = (k) => EVENT_ROWS.find((r) => r.key === k).y;
+  let d = `M${X0} ${yOf(bins[0])}`;
+  bins.forEach((k, i) => {
+    const x1 = X0 + (i + 1) * step;
+    d += ` H${x1.toFixed(1)}`;
+    if (i < 23 && bins[i + 1] !== k) d += ` V${yOf(bins[i + 1])}`;
+  });
+  const dots = bins
+    .map((k, i) =>
+      k === "normal"
+        ? ""
+        : `<circle class="bb-step-dot-${k}" cx="${(X0 + (i + 0.5) * step).toFixed(1)}" cy="${yOf(k)}" r="5"></circle>`
+    )
+    .join("");
+  const vLines = [0, 4, 8, 12, 16, 20, 24]
+    .map((h) => `<line class="bb-grid-line" x1="${X0 + h * step}" y1="10" x2="${X0 + h * step}" y2="150"></line>`)
+    .join("");
+  const hLines = EVENT_ROWS.map(
+    (r) => `<line class="bb-grid-line" x1="${X0}" y1="${r.y}" x2="${X0 + W}" y2="${r.y}"></line>`
+  ).join("");
+  const rowLabels = EVENT_ROWS.map(
+    (r) => `<text class="bb-axis-text" x="${X0 - 10}" y="${r.y + 4}" text-anchor="end">${isEn ? r.en : r.th}</text>`
+  ).join("");
+  const timeLabels = [0, 4, 8, 12, 16, 20, 24]
+    .map((h) => {
+      const t = new Date(start + h * 3600000).toLocaleTimeString("en-GB", {
+        hour: "2-digit",
+        minute: "2-digit",
+        timeZone: "Asia/Bangkok"
+      });
+      return `<text class="bb-axis-text" x="${X0 + h * step}" y="172" text-anchor="middle">${t}</text>`;
+    })
+    .join("");
+  ui.daActivityChart.innerHTML = `<svg viewBox="0 0 1060 184" role="img" aria-label="${escapeHtml(
+    isEn ? "Detected sound class per hour over the last 24 hours" : "ประเภทเสียงที่ตรวจพบรายชั่วโมงใน 24 ชั่วโมงล่าสุด"
+  )}">${hLines}${vLines}${rowLabels}${timeLabels}<path class="bb-step" d="${d}"></path>${dots}</svg>`;
+
+  // Event log
+  const rows = all.slice(0, 20);
+  ui.daEventBody.innerHTML = rows.length
+    ? rows
+        .map((inc) => {
+          const status = (inc.status || "new").toLowerCase();
+          return `<tr>
+            <td>${escapeHtml(formatFullTimestamp(inc.created_at))}</td>
+            <td>${escapeHtml(`${inc.sensor_id || ""} · ${inc.sensor_name || ""}`)}</td>
+            <td class="bb-strong">${escapeHtml(inc.event_type || "unknown")}</td>
+            <td>${formatConfidencePercent(inc.confidence)}%</td>
+            <td class="${getUrgencyClass(inc.urgency) === "high" ? "bb-st-new" : "bb-dim"}">${escapeHtml(
+            getUrgencyClass(inc.urgency)
+          )}</td>
+            <td class="bb-st-${escapeHtml(status)}">${escapeHtml(formatStatusLabel(status))}</td>
+            <td>${
+              inc.audio_url
+                ? `<button type="button" class="bb-link-btn bb-da-play" data-audio="${escapeHtml(inc.audio_url)}">${
+                    isEn ? "Play" : "ฟัง"
+                  }</button>`
+                : "—"
+            }</td>
+          </tr>`;
+        })
+        .join("")
+    : `<tr><td colspan="7" class="bb-dim">${
+        isEn ? "No events for this sensor yet." : "ยังไม่มีเหตุการณ์ของเซนเซอร์นี้"
+      }</td></tr>`;
+  ui.daEventBody.querySelectorAll(".bb-da-play").forEach((b) =>
+    b.addEventListener("click", () => playAudioClipOutLoud(b.dataset.audio))
+  );
+}
+
+function exportSensorEventsCsv() {
+  const node = HARDWARE_NODES.find((n) => n.node_id === selectedDaSensorId) || HARDWARE_NODES[0];
+  const rows = incidents.filter((i) => i.sensor_id === node.node_id);
+  const header = ["time", "sensor_id", "sensor_name", "event_type", "confidence", "urgency", "status"];
+  const q = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+  const lines = [header.join(",")].concat(
+    rows.map((i) =>
+      [
+        formatFullTimestamp(i.created_at),
+        i.sensor_id,
+        i.sensor_name,
+        i.event_type,
+        formatConfidencePercent(i.confidence),
+        getUrgencyClass(i.urgency),
+        i.status || "new"
+      ]
+        .map(q)
+        .join(",")
+    )
+  );
+  const blob = new Blob([lines.join("\n")], { type: "text/csv;charset=utf-8" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `blimbloom_${node.node_id}_events.csv`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+
+
+// ---------- Ranger App page (active incident, my profile, push, queue) ----------
+let rangerActiveId = null;
+let esgOpen = false;
+
+function eventTitle(inc) {
+  const isEn = getCurrentLang() === "en";
+  const k = eventKey(inc.event_type);
+  const map = {
+    elephant: isEn ? "Elephant near farmland" : "ช้างป่าใกล้พื้นที่เกษตร",
+    chainsaw: isEn ? "Chainsaw · possible illegal logging" : "เสียงเลื่อยยนต์ · อาจลักลอบตัดไม้",
+    vehicle: isEn ? "Vehicle in the forest" : "ยานพาหนะในเขตป่า",
+    normal: isEn ? "Normal forest sound" : "เสียงป่าปกติ"
+  };
+  return map[k];
+}
+
+function openIncidentsSorted() {
+  const rank = { high: 0, medium: 1, low: 2 };
+  return incidents
+    .filter((i) => (i.status || "new").toLowerCase() !== "resolved")
+    .sort((a, b) => {
+      const r = (rank[getUrgencyClass(a.urgency)] ?? 3) - (rank[getUrgencyClass(b.urgency)] ?? 3);
+      if (r !== 0) return r;
+      return (timestampToMillis(b.created_at) || 0) - (timestampToMillis(a.created_at) || 0);
+    });
+}
+
+function incidentLatLng(inc) {
+  const loc = inc.location;
+  if (loc && typeof loc.lat === "number" && typeof loc.lng === "number") return loc;
+  const node = HARDWARE_NODES.find((n) => n.node_id === inc.sensor_id);
+  return node ? node.location : null;
+}
+
+function renderRangerPage() {
+  const card = document.getElementById("rangerActiveCard");
+  if (!card) return;
+  const isEn = getCurrentLang() === "en";
+  const open = openIncidentsSorted();
+  if (!open.find((i) => i.id === rangerActiveId)) rangerActiveId = open[0]?.id || null;
+  const inc = open.find((i) => i.id === rangerActiveId);
+
+  if (!inc) {
+    card.innerHTML = `<div class="bb-empty-big">
+      <span class="bb-card-title-lg">${isEn ? "All clear" : "ไม่มีเหตุค้าง"}</span>
+      <span class="bb-muted">${
+        isEn
+          ? "No open incidents. New alerts from the sensors appear here instantly."
+          : "ไม่มีเหตุการณ์ที่ต้องดำเนินการ การแจ้งเตือนใหม่จากเซนเซอร์จะขึ้นที่นี่ทันที"
+      }</span></div>`;
+  } else {
+    const urg = getUrgencyClass(inc.urgency);
+    const status = (inc.status || "new").toLowerCase();
+    const ll = incidentLatLng(inc);
+    const gps = ll ? `${ll.lat.toFixed(2)}, ${ll.lng.toFixed(2)}` : "—";
+    const nav = ll
+      ? `<a class="bb-tile-link" href="https://www.google.com/maps/dir/?api=1&amp;destination=${ll.lat},${ll.lng}" target="_blank" rel="noopener">${escapeHtml(
+          gps
+        )} · ${isEn ? "Navigate" : "นำทาง"}</a>`
+      : "—";
+    const audio = inc.audio_url
+      ? `<audio class="bb-audio" controls preload="none" src="${escapeHtml(normalizeAudioUrl(inc.audio_url))}"></audio>`
+      : `<span class="bb-muted">${isEn ? "No audio attached." : "ไม่มีไฟล์เสียง"}</span>`;
+    const btn = (st, label) =>
+      `<button type="button" class="bb-btn ${status === st ? "bb-btn-primary" : "bb-btn-ghost"} bb-ranger-status" data-status="${st}" ${
+        status === st ? 'aria-pressed="true"' : ""
+      }>${label}</button>`;
+    card.innerHTML = `
+      <div class="bb-active-head">
+        <div class="bb-active-title-wrap">
+          <span class="bb-muted">${isEn ? "Active incident" : "เหตุการณ์ที่กำลังดำเนินการ"} · ID ${escapeHtml(String(inc.id).slice(0, 8))}</span>
+          <h2 class="bb-active-title">${escapeHtml(eventTitle(inc))}</h2>
+        </div>
+        <span class="bb-chip-row">
+          <span class="urgency-badge urgency-${urg}">${escapeHtml(urg)}</span>
+          <span class="status-badge status-${escapeHtml(status)}">${escapeHtml(formatStatusLabel(status))}</span>
+        </span>
+      </div>
+      <div class="bb-tiles">
+        <div class="bb-tile"><span class="bb-tile-label">${isEn ? "Sensor" : "เซนเซอร์"}</span><span class="bb-tile-value">${escapeHtml(
+          `${inc.sensor_id || ""} · ${inc.sensor_name || ""}`
+        )}</span></div>
+        <div class="bb-tile"><span class="bb-tile-label">${isEn ? "Detected" : "ตรวจพบ"}</span><span class="bb-tile-value">${escapeHtml(
+          formatRelativeTime(inc.created_at)
+        )}</span></div>
+        <div class="bb-tile"><span class="bb-tile-label">GPS</span><span class="bb-tile-value">${nav}</span></div>
+        <div class="bb-tile"><span class="bb-tile-label">${isEn ? "AI confidence" : "ความมั่นใจ AI"}</span><span class="bb-tile-value">${formatConfidencePercent(
+          inc.confidence
+        )}%</span></div>
+      </div>
+      <div class="bb-alert-pair">
+        <div class="bb-alert-box"><span class="bb-tile-label">ALERT (EN)</span><span class="bb-alert-en">${escapeHtml(
+          inc.alert_message_en || "—"
+        )}</span></div>
+        <div class="bb-alert-box"><span class="bb-tile-label">ALERT (TH)</span><span class="bb-alert-th">${escapeHtml(
+          inc.alert_message_th || "—"
+        )}</span></div>
+      </div>
+      <div class="bb-block"><span class="bb-block-title">${isEn ? "Evidence audio" : "เสียงหลักฐาน"}</span>${audio}</div>
+      <div class="bb-block"><span class="bb-block-title">${isEn ? "Gemini reasoning" : "เหตุผลจาก Gemini"}</span><span class="bb-reason">${escapeHtml(
+        inc.reasoning || "—"
+      )}</span></div>
+      <div class="bb-status-actions">
+        ${btn("acknowledged", isEn ? "Acknowledge" : "รับทราบ")}
+        ${btn("en_route", isEn ? "En route" : "กำลังเดินทาง")}
+        ${btn("resolved", isEn ? "Resolved" : "แก้ไขแล้ว")}
+      </div>`;
+    card.querySelectorAll(".bb-ranger-status").forEach((b) =>
+      b.addEventListener("click", () => handleUpdateIncidentStatus(inc.id, b.dataset.status))
+    );
+  }
+
+  // Queue
+  const q = document.getElementById("rangerQueue");
+  const qc = document.getElementById("rangerQueueCount");
+  if (qc) qc.textContent = String(open.length);
+  if (q) {
+    q.innerHTML = open.length
+      ? open
+          .map(
+            (i) => `<button type="button" class="bb-queue-item${i.id === rangerActiveId ? " active" : ""}" data-id="${escapeHtml(i.id)}">
+              <span class="bb-queue-text"><span class="bb-queue-title">${escapeHtml(
+                `${i.event_type || "unknown"} · ${i.sensor_id || ""}`
+              )}</span><span class="bb-queue-meta">${escapeHtml(formatRelativeTime(i.created_at))}</span></span>
+              <span class="bb-queue-status">${escapeHtml(formatStatusLabel((i.status || "new").toLowerCase()))}</span>
+            </button>`
+          )
+          .join("")
+      : `<p class="bb-empty">${isEn ? "Queue is empty." : "ไม่มีงานค้าง"}</p>`;
+    q.querySelectorAll(".bb-queue-item").forEach((b) =>
+      b.addEventListener("click", () => {
+        rangerActiveId = b.dataset.id;
+        renderRangerPage();
+        document.getElementById("rangerActiveCard")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      })
+    );
+  }
+
+  // My profile
+  const prof = document.getElementById("rangerProfileCard");
+  if (prof) {
+    const mine = rangers.find((r) => r.id === getMyRangerId());
+    if (!mine) {
+      prof.innerHTML = `<div class="bb-card-head"><span class="bb-card-title">${isEn ? "My profile" : "โปรไฟล์ของฉัน"}</span></div>
+        <p class="bb-muted bb-tight">${
+          isEn ? "Register so the team can call you when an incident fires." : "ลงทะเบียนเพื่อให้ทีมติดต่อคุณได้เมื่อเกิดเหตุ"
+        }</p>
+        <button type="button" class="bb-btn bb-btn-primary bb-btn-sm" data-goto-settings="1">${
+          isEn ? "Register in Settings" : "ลงทะเบียนในหน้าตั้งค่า"
+        }</button>`;
+    } else {
+      const onDuty = mine.on_duty !== false;
+      prof.innerHTML = `<div class="bb-ranger bb-ranger-profile">
+          <span class="bb-avatar bb-avatar-md">${escapeHtml(initialsOf(mine.name))}</span>
+          <span class="bb-ranger-text"><span class="bb-ranger-name">${escapeHtml(mine.name)}</span><span class="bb-ranger-meta">${escapeHtml(
+        [mine.role, stationLabel(mine.station)].filter(Boolean).join(" · ")
+      )}</span></span>
+          <button type="button" class="bb-link-btn" data-goto-settings="1">${isEn ? "Edit" : "แก้ไข"}</button>
+        </div>
+        <div class="bb-duty-row"><span>${isEn ? "On duty" : "กำลังปฏิบัติงาน"}</span><button type="button" id="rangerDutySwitch" class="bb-switch" role="switch" aria-checked="${onDuty}" aria-label="On duty"><span></span></button></div>`;
+      document.getElementById("rangerDutySwitch")?.addEventListener("click", () => toggleMyDuty(!onDuty));
+    }
+    prof.querySelectorAll("[data-goto-settings]").forEach((b) =>
+      b.addEventListener("click", () => switchActivePage("settings"))
+    );
+  }
+
+  // Push status
+  const ps = document.getElementById("rangerPushStatus");
+  if (ps) {
+    const granted =
+      "Notification" in window &&
+      Notification.permission === "granted" &&
+      localStorage.getItem("blimblom_push_registered") === "1";
+    const denied = "Notification" in window && Notification.permission === "denied";
+    ps.className = `bb-push-status ${granted ? "is-on" : ""}`;
+    ps.textContent = granted
+      ? isEn
+        ? "Enabled on this device"
+        : "เปิดใช้งานบนอุปกรณ์นี้แล้ว"
+      : denied
+      ? isEn
+        ? "Blocked in browser settings"
+        : "ถูกบล็อกในการตั้งค่าเบราว์เซอร์"
+      : isEn
+      ? "Not enabled on this device yet"
+      : "ยังไม่ได้เปิดบนอุปกรณ์นี้";
+  }
+}
+
+async function toggleMyDuty(next) {
+  const id = getMyRangerId();
+  const mine = rangers.find((r) => r.id === id);
+  if (!mine) return;
+  try {
+    if (db) {
+      await setDoc(doc(db, "rangers", id), { on_duty: !!next, updated_at: serverTimestamp() }, { merge: true });
+    } else {
+      const list = readDemoRangers().map((r) => (r.id === id ? { ...r, on_duty: !!next } : r));
+      localStorage.setItem(DEMO_RANGERS_KEY, JSON.stringify(list));
+      rangers = list;
+      renderRangers();
+    }
+  } catch (err) {
+    console.error("[Ranger] duty toggle failed:", err);
+    showToast((getCurrentLang() === "en" ? "Could not update: " : "อัปเดตไม่สำเร็จ: ") + err.message);
+  }
+}
+
+function setEsgOpen(open) {
+  esgOpen = open;
+  const btn = document.getElementById("btnToggleEsg");
+  if (btn) {
+    btn.setAttribute("aria-expanded", String(open));
+    btn.textContent = t(open ? "esg_hide" : "esg_show");
+  }
+  dom.sectionAnalytics?.classList.toggle("hidden", !(open && currentView === "analytics"));
+}
+
+// Re-render everything derived from incidents / language
+function renderDerivedViews() {
+  renderLiveStats();
+  if (currentView === "analytics") renderDataAnalysis();
+  if (currentView === "mobile-ranger") renderRangerPage();
+}
+
+// ----------------------------------------------------------------------------
+// Page Navigation Switcher (sidebar on PC, bottom bar on phones)
+// ----------------------------------------------------------------------------
+function switchActivePage(view, opts = {}) {
+  if (!VIEWS.includes(view)) view = "dashboard";
+  currentView = view;
+
+  document.querySelectorAll(".nav-view-btn").forEach((b) => {
+    const on = b.dataset.view === view;
+    b.classList.toggle("active", on);
+    if (on) b.setAttribute("aria-current", "page");
+    else b.removeAttribute("aria-current");
+  });
+
+  closeIncidentDetail(!opts.initial);
+
+  const show = (el, on) => el && el.classList.toggle("hidden", !on);
+  const mobileRangerBanner = document.getElementById("mobileRangerAppBanner");
+  show(ui.sectionDashboard, view === "dashboard");
+  show(dom.sectionMapAndAlerts, view === "map-alerts");
+  show(mobileRangerBanner, false);
+  show(document.getElementById("sectionRanger"), view === "mobile-ranger");
+  show(ui.sectionDataAnalysis, view === "analytics");
+  show(document.getElementById("esgToggleRow"), view === "analytics");
+  show(dom.sectionAnalytics, view === "analytics" && esgOpen);
+  show(dom.sectionHardware, view === "hardware");
+  show(ui.sectionSettings, view === "settings");
+  show(dom.simulatorDrawer, view === "dashboard");
+  dom.mapColumnCard?.classList.remove("hidden");
+  dom.alertColumnCard?.classList.remove("hidden");
+
+  if (view === "dashboard") placeMapCard(ui.dashMapSlot);
+  if (view === "map-alerts") placeMapCard(ui.mapPageMapSlot);
+  if (view === "analytics") renderDataAnalysis();
+  if (view === "settings") renderRangers();
+  if (view === "mobile-ranger") renderRangerPage();
+
+  updatePageTitle();
+  if (!opts.initial) window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function initSectionViewSwitcher() {
+  document.querySelectorAll(".nav-view-btn").forEach((btn) => {
+    btn.addEventListener("click", () => switchActivePage(btn.dataset.view || "dashboard"));
+  });
+  document.querySelectorAll("[data-goto]").forEach((btn) => {
+    btn.addEventListener("click", () => switchActivePage(btn.dataset.goto));
+  });
+  ui.btnHeaderSettings?.addEventListener("click", () => switchActivePage("settings"));
+  ui.btnDaExport?.addEventListener("click", exportSensorEventsCsv);
+  document.getElementById("btnToggleEsg")?.addEventListener("click", () => {
+    setEsgOpen(!esgOpen);
+    if (esgOpen) setTimeout(() => dom.sectionAnalytics?.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
+  });
+  document.getElementById("btnRangerPush")?.addEventListener("click", async () => {
+    await handleEnableAlertsTap();
+    renderRangerPage();
   });
 
   const btnMobileRangerPush = document.getElementById("btnMobileRangerPush");
   if (btnMobileRangerPush) {
     btnMobileRangerPush.addEventListener("click", handleEnableAlertsTap);
   }
+  setInterval(updatePageClock, 30000);
 }
 
 // ----------------------------------------------------------------------------
@@ -2246,6 +3133,7 @@ function initFirestoreConnection() {
 
     incidents = [...PREVIEW_INCIDENTS];
     incidents.forEach((i) => knownIncidentIds.add(i.id));
+    initRangersSync();
     renderIncidentsList();
     checkInitialDeepLink();
     return;
@@ -2254,6 +3142,7 @@ function initFirestoreConnection() {
   try {
     firebaseApp = initializeApp(FIREBASE_CONFIG);
     db = getFirestore(firebaseApp);
+    initRangersSync();
 
     const incidentsQuery = query(
       collection(db, "incidents"),
@@ -2331,8 +3220,11 @@ function checkInitialDeepLink() {
 // ----------------------------------------------------------------------------
 function initApp() {
   initThemeToggle();
+  switchActivePage("dashboard", { initial: true });
   renderSensorButtons();
   initLeafletGisMap();
+  renderSensorStatusTable();
+  initSettingsPage();
   renderDeviceRegistryTable();
   initAnalyticsCharts();
   initAiAssistantChat();
@@ -2340,6 +3232,7 @@ function initApp() {
   initSectionViewSwitcher();
   initFirestoreConnection();
   initLanguageSwitcher();
+  initAccount();
 
   if (dom.btnToggleSimulate && dom.simulateBody) {
     dom.btnToggleSimulate.addEventListener("click", () => {
@@ -2379,7 +3272,7 @@ function initApp() {
 
   dom.btnBackToList.addEventListener("click", () => closeIncidentDetail(true));
   dom.headerHomeLink.addEventListener("click", () => {
-    switchActivePage("map-alerts");
+    switchActivePage("dashboard");
   });
 
   window.addEventListener("popstate", () => {

@@ -7,7 +7,7 @@
 ---
 
 ## 🎯 Architecture Overview
-`Forest Sensor (or Simulator) -> Cloud Run (POST /analyze) -> Gemini 2.5 Flash -> Firestore (incidents) & FCM Push -> BLIMBLOOM Web & Mobile Ranger PWA`
+`Forest Sensor (or Simulator) -> Cloud Run (POST /analyze) -> Gemini 3.8 Flash -> Firestore (incidents) & FCM Push -> BLIMBLOOM Web & Mobile Ranger PWA`
 
 1. **Page 1 — Thailand Forest GIS Map & Early Warning Feed (`🗺️ แผนที่และแจ้งเตือนภัย`)**:
    - Interactive GIS map of Thailand (Kui Buri National Park, Khao Yai, Huai Kha Khaeng, and National Overview) with contextual sensor markers (`🐘 Elephant`, `🪚 Chainsaw`, `🦗 Crickets`, `📷 AI TrailCam`, `🦇 Ultrasonic Bio-Sonar`).

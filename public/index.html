@@ -60,13 +60,13 @@
   <!-- Chart.js CDN -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 
-  <link rel="stylesheet" href="./styles.css" />
+  <link rel="stylesheet" href="./styles.css?v9" />
 </head>
 <body class="bg-[#F6F7F5] dark:bg-slate-950 text-slate-800 dark:text-slate-100 font-sans antialiased min-h-screen flex flex-col transition-colors duration-200">
 
   <!-- ==================== OFFICIAL ENTERPRISE HEADER ==================== -->
   <header class="sticky top-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200/90 dark:border-slate-800 shadow-xs">
-    <div class="max-w-[1400px] mx-auto px-4 sm:px-6 h-20 flex items-center justify-between gap-3">
+    <div class="w-full px-4 sm:px-6 h-[76px] flex items-center justify-between gap-3">
 
       <!-- Official Logo & Brand Name -->
       <div id="headerHomeLink" class="flex items-center gap-3.5 cursor-pointer shrink-0 group" role="button" tabindex="0">
@@ -88,31 +88,11 @@
         </div>
       </div>
 
-      <!-- Clean 4-Page Navigation Tabs (No Clutter) -->
-      <nav class="hidden xl:flex items-center gap-1.5 bg-slate-100/90 dark:bg-slate-800 p-1.5 rounded-2xl border border-slate-200/80 dark:border-slate-700" aria-label="Main Navigation">
-        <button type="button" class="nav-view-btn active px-3.5 py-2 rounded-xl text-xs font-bold transition whitespace-nowrap flex items-center gap-1.5" data-view="map-alerts">
-          <span>🗺️</span>
-          <span data-i18n="nav_tab_map">1. แผนที่และแจ้งเตือนภัย (GIS &amp; Alerts)</span>
-        </button>
-        <button type="button" class="nav-view-btn px-3.5 py-2 rounded-xl text-xs font-bold transition whitespace-nowrap flex items-center gap-1.5" data-view="analytics">
-          <span>📊</span>
-          <span data-i18n="nav_tab_analytics">2. ข้อมูลวิจัย &amp; คาร์บอน (Big Data &amp; ESG)</span>
-        </button>
-        <button type="button" class="nav-view-btn px-3.5 py-2 rounded-xl text-xs font-bold transition whitespace-nowrap flex items-center gap-1.5" data-view="hardware">
-          <span>🔌</span>
-          <span data-i18n="nav_tab_hardware">3. อุปกรณ์ &amp; สถานะระบบ (Hardware)</span>
-        </button>
-        <button type="button" class="nav-view-btn px-3.5 py-2 rounded-xl text-xs font-bold transition whitespace-nowrap flex items-center gap-1.5" data-view="mobile-ranger">
-          <span>📱</span>
-          <span data-i18n="nav_tab_ranger">4. แอปเจ้าหน้าที่ (Ranger App)</span>
-        </button>
-      </nav>
-
       <!-- Right Action Controls: Simulator, Language Switcher (TH/EN), Theme Toggle, Connection Status -->
       <div class="flex items-center gap-2 shrink-0">
         <!-- Toggle Sensor Simulator Drawer Button -->
         <button id="btnOpenSimulatorModal" type="button" class="px-3.5 py-2.5 rounded-xl text-xs font-bold bg-[#143328] hover:bg-[#1B4332] dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white shadow-sm transition flex items-center gap-1.5">
-          <span>🎛️</span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg>
           <span class="hidden sm:inline" data-i18n="btn_simulate_top">จำลองส่งเสียงเซนเซอร์ (Simulate)</span>
         </button>
 
@@ -124,13 +104,18 @@
           title="Switch Language (ภาษาไทย / English)"
           aria-label="Switch Language"
         >
-          <span id="langToggleFlag">🇹🇭</span>
+          <span id="langToggleFlag" class="hidden"></span>
           <span id="langToggleLabel">TH / EN</span>
         </button>
 
         <!-- Light / Dark Theme Toggle -->
         <button id="btnThemeToggle" type="button" class="w-10 h-10 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-sm transition" title="สลับโหมดสีสว่าง / มืด">
-          <span id="themeToggleIcon">🌙</span>
+          <span id="themeToggleIcon"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></span>
+        </button>
+
+        <!-- Settings shortcut (phones / tablets, where the sidebar is hidden) -->
+        <button id="btnHeaderSettings" type="button" class="bb-mobile-only w-10 h-10 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 items-center justify-center transition" aria-label="Settings">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
         </button>
 
         <!-- Cloud Connection Badge -->
@@ -141,24 +126,49 @@
       </div>
     </div>
 
-    <!-- Mobile / Tablet Navigation Bar (Visible below XL) -->
-    <div class="xl:hidden border-t border-slate-200 dark:border-slate-800 bg-slate-50/90 dark:bg-slate-900 px-4 py-2 overflow-x-auto">
-      <div class="flex items-center gap-1.5 min-w-max">
-        <button type="button" class="nav-view-btn active px-3.5 py-1.5 rounded-xl text-xs font-bold transition whitespace-nowrap" data-view="map-alerts" data-i18n="nav_mob_map">
-          🗺️ 1. แผนที่ &amp; แจ้งเตือน
-        </button>
-        <button type="button" class="nav-view-btn px-3.5 py-1.5 rounded-xl text-xs font-bold transition whitespace-nowrap" data-view="analytics" data-i18n="nav_mob_analytics">
-          📊 2. Big Data &amp; ESG
-        </button>
-        <button type="button" class="nav-view-btn px-3.5 py-1.5 rounded-xl text-xs font-bold transition whitespace-nowrap" data-view="hardware" data-i18n="nav_mob_hardware">
-          🔌 3. อุปกรณ์เซนเซอร์
-        </button>
-        <button type="button" class="nav-view-btn px-3.5 py-1.5 rounded-xl text-xs font-bold transition whitespace-nowrap" data-view="mobile-ranger" data-i18n="nav_mob_ranger">
-          📱 4. แอปเจ้าหน้าที่
-        </button>
-      </div>
-    </div>
   </header>
+
+  <div class="bb-shell">
+  <!-- ==================== LEFT SIDEBAR NAVIGATION (PC / LARGE SCREENS) ==================== -->
+  <aside id="appSidebar" class="bb-sidebar" aria-label="Main navigation">
+    <nav class="bb-side-nav">
+      <button type="button" class="nav-view-btn bb-side-item active" data-view="dashboard">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>
+        <span data-i18n="side_dashboard">Dashboard</span>
+      </button>
+      <button type="button" class="nav-view-btn bb-side-item" data-view="map-alerts">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 8 3 8H3s3-1 3-8"/><path d="M10 20a2 2 0 0 0 4 0"/></svg>
+        <span data-i18n="side_map">Map &amp; Alerts</span>
+        <span id="sideAlertBadge" class="bb-side-badge">0</span>
+      </button>
+      <button type="button" class="nav-view-btn bb-side-item" data-view="analytics">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5"/><path d="M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></svg>
+        <span data-i18n="side_data">Data Analysis</span>
+      </button>
+      <button type="button" class="nav-view-btn bb-side-item" data-view="hardware">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="2"/><path d="M8.5 8.5a5 5 0 0 0 0 7M15.5 8.5a5 5 0 0 1 0 7M5.6 5.6a9 9 0 0 0 0 12.8M18.4 5.6a9 9 0 0 1 0 12.8"/></svg>
+        <span data-i18n="side_sensors">Sensors</span>
+      </button>
+      <button type="button" class="nav-view-btn bb-side-item" data-view="mobile-ranger">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="9" r="4"/><path d="M7 8h10M4 21c1-4 4.5-6 8-6s7 2 8 6"/></svg>
+        <span data-i18n="side_ranger">Ranger App</span>
+      </button>
+    </nav>
+    <div class="bb-side-spacer"></div>
+    <div class="bb-side-system">
+      <span class="bb-side-system-title" data-i18n="side_system">SYSTEM</span>
+      <span class="bb-side-system-row"><span class="bb-dot"></span>Cloud Run API</span>
+      <span class="bb-side-system-row"><span class="bb-dot"></span>Gemini 3.8 Flash</span>
+      <span class="bb-side-system-row"><span class="bb-dot"></span>Firestore &amp; FCM</span>
+    </div>
+    <button type="button" id="sideAccount" class="bb-side-item bb-side-account"></button>
+    <button type="button" class="nav-view-btn bb-side-item bb-side-settings" data-view="settings">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+      <span data-i18n="side_settings">Settings</span>
+    </button>
+  </aside>
+
+  <div class="bb-content">
 
   <!-- ==================== SYSTEM BANNERS (CONFIG, PWA INSTALL, PUSH) ==================== -->
   <div class="max-w-[1400px] w-full mx-auto px-4 sm:px-6">
@@ -192,7 +202,7 @@
     <!-- Standalone Push Notification Enable Bar -->
     <section id="pushEnableBar" class="hidden mt-3 px-4 py-3 rounded-xl bg-emerald-50/90 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/70 flex flex-wrap items-center justify-between gap-3" aria-label="Push Notifications">
       <div class="flex items-center gap-3">
-        <span class="text-lg" aria-hidden="true">🔔</span>
+        <span class="text-lg" aria-hidden="true"></span>
         <div>
           <strong id="pushStatusTitle" class="text-xs sm:text-sm font-bold text-slate-900 dark:text-white block" data-i18n="push_bar_title">ระบบแจ้งเตือนฉุกเฉินสำหรับเจ้าหน้าที่ (FCM Push)</strong>
           <p id="pushStatusDesc" class="text-xs text-slate-600 dark:text-slate-400 m-0" data-i18n="push_bar_desc">รับการแจ้งเตือนทันทีเมื่อเซนเซอร์ตรวจพบเสียงช้างป่าหรือเลื่อยยนต์ (High Priority)</p>
@@ -201,63 +211,6 @@
       <button id="btnEnableAlerts" type="button" class="btn btn-primary btn-sm" data-i18n="btn_enable_alerts">เปิดการแจ้งเตือน</button>
     </section>
   </div>
-
-  <!-- ==================== SENSOR SIMULATOR DRAWER (PAGE A: DEMO TRIGGER) ==================== -->
-  <section id="simulatorDrawer" class="max-w-[1400px] w-full mx-auto px-4 sm:px-6 mt-4">
-    <div class="bg-white dark:bg-slate-900 border-2 border-[#143328]/15 dark:border-emerald-800/60 rounded-2xl p-4 sm:p-5 shadow-sm">
-      <div class="flex flex-wrap items-center justify-between gap-3">
-        <div class="flex items-center gap-3">
-          <div class="w-10 h-10 rounded-xl bg-[#143328] text-white flex items-center justify-center text-lg shrink-0">
-            🎛️
-          </div>
-          <div>
-            <div class="flex flex-wrap items-center gap-2">
-              <span class="px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider rounded-full bg-emerald-100 dark:bg-emerald-950 text-[#143328] dark:text-emerald-300" data-i18n="sim_badge">
-                หน้า A · Sensor Simulator
-              </span>
-              <h2 class="text-sm sm:text-base font-bold text-slate-900 dark:text-white" data-i18n="sim_title">
-                จำลองการส่งเสียงจากเซนเซอร์ในป่า (Sensor → Cloud Run /analyze → Gemini AI → แจ้งเตือน)
-              </h2>
-            </div>
-            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5" data-i18n="sim_subtitle">
-              กดเลือกจุดเซนเซอร์ด้านล่างเพื่อส่งไฟล์เสียงจริงไปวิเคราะห์ และดูผลลัพธ์เด้งขึ้นบนแผนที่ประเทศไทยและรายการแจ้งเตือนทันที
-            </p>
-          </div>
-        </div>
-
-        <div class="flex items-center gap-3">
-          <label class="flex items-center gap-2 text-xs font-semibold text-slate-700 dark:text-slate-300 cursor-pointer select-none bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-lg">
-            <input type="checkbox" id="chkPlayOnSimulate" checked class="accent-[#143328] w-4 h-4 rounded" />
-            <span data-i18n="sim_play_sound">🔊 เปิดเสียงออกลำโพงเมื่อกด</span>
-          </label>
-          <button id="btnToggleSimulate" type="button" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition" data-i18n="sim_btn_hide">
-            พับเก็บ ▲
-          </button>
-        </div>
-      </div>
-
-      <div id="simulateBody" class="pt-4 mt-3.5 border-t border-slate-100 dark:border-slate-800">
-        <div id="sensorButtonsGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-          <!-- Populated dynamically from public/js/sensors.js -->
-        </div>
-
-        <!-- Simulation Progress Status -->
-        <div id="simulateStatusBox" class="simulate-status hidden mt-3.5" role="status" aria-live="polite">
-          <div id="simulateSpinner" class="spinner"></div>
-          <div class="simulate-status-copy">
-            <strong id="simulateStatusText">กำลังส่งไฟล์เสียงไปยัง Cloud Run &amp; Gemini AI...</strong>
-            <span class="simulate-substatus" data-i18n="sim_sending_sub">กำลังจำแนกคลื่นความถี่เสียง คำนวณ % ความมั่นใจ และประเมินความเร่งด่วน...</span>
-          </div>
-          <div class="acoustic-wave" aria-hidden="true">
-            <span></span><span></span><span></span><span></span><span></span>
-          </div>
-        </div>
-
-        <!-- Error Box -->
-        <div id="simulateErrorBox" class="error-banner hidden mt-3" role="alert"></div>
-      </div>
-    </div>
-  </section>
 
   <!-- ==================== MAIN WORKSPACE ==================== -->
   <main class="max-w-[1400px] w-full mx-auto px-4 sm:px-6 py-5 flex-1 flex flex-col gap-6">
@@ -276,81 +229,124 @@
     <!-- ==================== TABBED PAGES WORKSPACE ==================== -->
     <div id="listView" class="flex flex-col gap-6">
 
-      <!-- EXECUTIVE KPI SUMMARY BAR (Clean 4 Cards) -->
-      <section id="kpiSummarySection" class="grid grid-cols-2 lg:grid-cols-4 gap-4" aria-label="Key Performance Indicators">
-        <div class="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-4 shadow-2xs flex items-center justify-between">
-          <div>
-            <span class="text-xs font-semibold text-slate-500 dark:text-slate-400" data-i18n="kpi_nodes_label">เครือข่ายเซนเซอร์ในพื้นที่ป่า</span>
-            <div class="text-2xl font-extrabold text-slate-900 dark:text-white mt-1 flex items-baseline gap-2">
-              <span data-i18n="kpi_nodes_val">6 โหนด</span>
-              <span class="text-[11px] font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950 px-2 py-0.5 rounded-full" data-i18n="kpi_nodes_badge">ออนไลน์ 100%</span>
-            </div>
-            <span class="text-xs text-slate-500 dark:text-slate-400 mt-1 block" data-i18n="kpi_nodes_sub">อุทยานแห่งชาติกุยบุรี จ.ประจวบคีรีขันธ์</span>
-          </div>
-          <div class="w-12 h-12 rounded-2xl bg-[#F3F8F5] dark:bg-emerald-950/80 text-[#143328] dark:text-emerald-400 flex items-center justify-center text-2xl">
-            🌲
-          </div>
+      <!-- PAGE TITLE BAR (updated per page by switchActivePage) -->
+      <div id="pageTitleBar" class="bb-page-title">
+        <div class="bb-page-title-text">
+          <span id="pageEyebrow" class="bb-eyebrow">KUI BURI NATIONAL PARK · 6 NODES</span>
+          <h1 id="pageTitle" class="bb-h1">Overview</h1>
         </div>
+        <span id="pageClock" class="bb-page-meta"></span>
+      </div>
 
-        <div class="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-4 shadow-2xs flex items-center justify-between">
-          <div>
-            <span class="text-xs font-semibold text-slate-500 dark:text-slate-400" data-i18n="kpi_high_label">แจ้งเตือนภัยคุกคามระดับสูง (High)</span>
-            <div class="flex items-baseline gap-2 mt-1">
-              <span id="kpiHighCount" class="text-2xl font-extrabold text-red-600 dark:text-red-400">2</span>
-              <span class="text-xs font-medium text-slate-500 dark:text-slate-400"><span data-i18n="kpi_high_avg_prefix">ความแม่นยำ AI เฉลี่ย</span> <strong id="kpiAvgConfidence" class="text-slate-800 dark:text-slate-200">93%</strong></span>
+  <!-- ==================== SENSOR SIMULATOR DRAWER (PAGE A: DEMO TRIGGER) ==================== -->
+      <section id="simulatorDrawer" class="w-full">
+        <div class="bb-card bb-sim">
+          <div class="bb-sim-head">
+            <div class="bb-sim-title-wrap">
+              <span class="bb-icon-tile"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M2 12h2M6 8v8M10 5v14M14 8v8M18 10v4M22 12h-2"/></svg></span>
+              <div class="bb-sim-text">
+                <span class="bb-card-title" data-i18n="sim_title_short">Sensor simulator</span>
+                <span class="bb-muted">Sensor → Cloud Run /analyze → Gemini → Firestore → push alert</span>
+              </div>
             </div>
-            <span class="text-xs text-slate-500 dark:text-slate-400 mt-1 block" data-i18n="kpi_high_sub">ตรวจจับช้างป่า &amp; เลื่อยยนต์ตัดไม้</span>
+            <div class="bb-sim-controls">
+              <label class="bb-check bb-check-pill"><input type="checkbox" id="chkPlayOnSimulate" checked /><span data-i18n="sim_play_short">Play sound on send</span></label>
+              <button id="btnToggleSimulate" type="button" class="bb-btn bb-btn-ghost bb-btn-sm" data-i18n="sim_btn_hide">Hide</button>
+            </div>
           </div>
-          <div class="w-12 h-12 rounded-2xl bg-red-50 dark:bg-red-950/70 text-red-600 dark:text-red-400 flex items-center justify-center text-2xl">
-            🐘
-          </div>
-        </div>
 
-        <div class="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-4 shadow-2xs flex items-center justify-between">
-          <div>
-            <span class="text-xs font-semibold text-slate-500 dark:text-slate-400" data-i18n="kpi_carbon_label">คาร์บอนเครดิตป่าไม้ที่ปกป้องได้</span>
-            <div class="text-2xl font-extrabold text-slate-900 dark:text-white mt-1">
-              142,850 <span class="text-xs font-bold text-emerald-700 dark:text-emerald-400">tCO₂e</span>
+          <div id="simulateBody" class="bb-sim-body">
+            <div id="sensorButtonsGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+              <!-- Populated dynamically from public/js/sensors.js -->
             </div>
-            <span class="text-xs text-slate-500 dark:text-slate-400 mt-1 block" data-i18n="kpi_carbon_sub">รองรับมาตรฐาน ESG / CSR ระดับองค์กร</span>
-          </div>
-          <div class="w-12 h-12 rounded-2xl bg-amber-50 dark:bg-amber-950/70 text-amber-700 dark:text-amber-400 flex items-center justify-center text-2xl">
-            🌿
-          </div>
-        </div>
-
-        <div class="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-4 shadow-2xs flex items-center justify-between">
-          <div>
-            <span class="text-xs font-semibold text-slate-500 dark:text-slate-400" data-i18n="kpi_modalities_label">ข้อมูลระบบนิเวศแบบ Multimodal</span>
-            <div class="text-2xl font-extrabold text-slate-900 dark:text-white mt-1">
-              6 <span class="text-xs font-bold text-sky-700 dark:text-sky-400" data-i18n="kpi_modalities_unit">มิติข้อมูล</span>
+    
+            <!-- Simulation Progress Status -->
+            <div id="simulateStatusBox" class="simulate-status hidden mt-3.5" role="status" aria-live="polite">
+              <div id="simulateSpinner" class="spinner"></div>
+              <div class="simulate-status-copy">
+                <strong id="simulateStatusText">กำลังส่งไฟล์เสียงไปยัง Cloud Run &amp; Gemini AI...</strong>
+                <span class="simulate-substatus" data-i18n="sim_sending_sub">กำลังจำแนกคลื่นความถี่เสียง คำนวณ % ความมั่นใจ และประเมินความเร่งด่วน...</span>
+              </div>
+              <div class="acoustic-wave" aria-hidden="true">
+                <span></span><span></span><span></span><span></span><span></span>
+              </div>
             </div>
-            <span class="text-xs text-slate-500 dark:text-slate-400 mt-1 block" data-i18n="kpi_modalities_sub">เสียง · ภาพ · อัลตราโซนิก · อุณหภูมิ · ความชื้น · แสง</span>
-          </div>
-          <div class="w-12 h-12 rounded-2xl bg-sky-50 dark:bg-sky-950/70 text-sky-600 dark:text-sky-400 flex items-center justify-center text-2xl">
-            🎙️
+    
+            <!-- Error Box -->
+            <div id="simulateErrorBox" class="error-banner hidden mt-3" role="alert"></div>
           </div>
         </div>
       </section>
 
-      <!-- ==================== PAGE 1: THAILAND GIS MAP & EARLY WARNING FEED (DEFAULT) ==================== -->
-      <div id="sectionMapAndAlerts" class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+      <!-- ==================== PAGE 0: DASHBOARD (DEFAULT) ==================== -->
+      <section id="sectionDashboard" class="bb-dash-grid" aria-label="Dashboard">
+        <!-- EXECUTIVE KPI SUMMARY (donut rings, secondary green) -->
+        <div id="kpiSummarySection" class="bb-kpi-grid" aria-label="Key Performance Indicators">
+          <div class="bb-card bb-kpi">
+            <svg class="bb-ring" viewBox="0 0 84 84" role="img" aria-label="Nodes online"><circle class="bb-ring-track" cx="42" cy="42" r="32"/><circle id="kpiRingNodes" class="bb-ring-val" cx="42" cy="42" r="32" stroke-dasharray="201 201" transform="rotate(-90 42 42)"/><text id="kpiRingNodesText" x="42" y="47" text-anchor="middle" class="bb-ring-text">100%</text></svg>
+            <div class="bb-kpi-body">
+              <span class="bb-kpi-label" data-i18n="kpi_nodes_label">เครือข่ายเซนเซอร์ในพื้นที่ป่า</span>
+              <span class="bb-kpi-value" data-i18n="kpi_nodes_val">6 โหนด</span>
+              <span class="bb-kpi-sub" data-i18n="kpi_nodes_sub">อุทยานแห่งชาติกุยบุรี จ.ประจวบคีรีขันธ์</span>
+            </div>
+          </div>
+          <div class="bb-card bb-kpi">
+            <svg class="bb-ring" viewBox="0 0 84 84" role="img" aria-label="Average AI confidence"><circle class="bb-ring-track" cx="42" cy="42" r="32"/><circle id="kpiRingConfidence" class="bb-ring-val" cx="42" cy="42" r="32" stroke-dasharray="0 201" transform="rotate(-90 42 42)"/><text id="kpiAvgConfidence" x="42" y="47" text-anchor="middle" class="bb-ring-text">0%</text></svg>
+            <div class="bb-kpi-body">
+              <span class="bb-kpi-label" data-i18n="kpi_high_label">แจ้งเตือนภัยคุกคามระดับสูง (High)</span>
+              <span id="kpiHighCount" class="bb-kpi-value bb-text-danger">0</span>
+              <span class="bb-kpi-sub"><span data-i18n="kpi_high_avg_prefix">ความแม่นยำ AI เฉลี่ย</span> · <span data-i18n="kpi_high_sub">ตรวจจับช้างป่า &amp; เลื่อยยนต์ตัดไม้</span></span>
+            </div>
+          </div>
+          <div class="bb-card bb-kpi">
+            <svg class="bb-ring" viewBox="0 0 84 84" role="img" aria-label="Illustrative carbon metric"><circle class="bb-ring-track" cx="42" cy="42" r="32"/><circle class="bb-ring-val bb-ring-earth" cx="42" cy="42" r="32" stroke-dasharray="175 201" transform="rotate(-90 42 42)"/><text x="42" y="47" text-anchor="middle" class="bb-ring-text">87%</text></svg>
+            <div class="bb-kpi-body">
+              <span class="bb-kpi-label" data-i18n="kpi_carbon_label">คาร์บอนเครดิตป่าไม้ที่ปกป้องได้</span>
+              <span class="bb-kpi-value">142,850 <small class="bb-unit">tCO₂e</small></span>
+              <span class="bb-kpi-sub bb-text-earth" data-i18n="mock_label">Mock-up · illustrative</span>
+            </div>
+          </div>
+          <div class="bb-card bb-kpi">
+            <svg class="bb-ring" viewBox="0 0 84 84" role="img" aria-label="6 of 6 data types"><circle class="bb-ring-track" cx="42" cy="42" r="32"/><circle class="bb-ring-val" cx="42" cy="42" r="32" stroke-dasharray="201 201" transform="rotate(-90 42 42)"/><text x="42" y="47" text-anchor="middle" class="bb-ring-text">6/6</text></svg>
+            <div class="bb-kpi-body">
+              <span class="bb-kpi-label" data-i18n="kpi_modalities_label">ข้อมูลระบบนิเวศแบบ Multimodal</span>
+              <span class="bb-kpi-value">6 <small class="bb-unit" data-i18n="kpi_modalities_unit">มิติข้อมูล</small></span>
+              <span class="bb-kpi-sub" data-i18n="kpi_modalities_sub">เสียง · ภาพ · อัลตราโซนิก · อุณหภูมิ · ความชื้น · แสง</span>
+            </div>
+          </div>
+        </div>
+        <!-- The live GIS map card is moved here by JS while the Dashboard is shown -->
+        <div id="dashMapSlot" class="bb-slot"></div>
+      </section>
 
-        <!-- LEFT 7 COLS: THAILAND FOREST ECOSYSTEM GIS MAP -->
-        <section id="mapColumnCard" class="lg:col-span-7 bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-5 shadow-2xs flex flex-col">
+      <!-- ==================== PAGE 1: THAILAND GIS MAP & EARLY WARNING FEED (DEFAULT) ==================== -->
+      <div id="sectionMapAndAlerts" class="hidden bb-map-page">
+        <!-- Live stat row (computed from Firestore incidents, sensors and rangers) -->
+        <section id="mapStatsRow" class="bb-stats-row" aria-label="Live status">
+          <div class="bb-card bb-stat"><div class="bb-stat-body"><span class="bb-kpi-label" data-i18n="stat_online">Nodes online</span><span id="statOnline" class="bb-stat-value">0</span></div></div>
+          <div class="bb-card bb-stat"><div class="bb-stat-body"><span class="bb-kpi-label" data-i18n="stat_high">High-urgency alerts</span><span id="statHigh" class="bb-stat-value bb-text-danger">0</span></div></div>
+          <div class="bb-card bb-stat"><div class="bb-stat-body"><span class="bb-kpi-label" data-i18n="stat_pending">Awaiting response</span><span id="statPending" class="bb-stat-value bb-text-earth">0</span></div></div>
+          <div class="bb-card bb-stat"><div class="bb-stat-body"><span class="bb-kpi-label" data-i18n="stat_rangers">Rangers on duty</span><span id="statRangers" class="bb-stat-value">0</span></div></div>
+        </section>
+
+        <div class="bb-map-grid">
+          <div id="mapPageLeft" class="bb-col">
+            <div id="mapPageMapSlot" class="bb-slot">
+        <!-- THAILAND FOREST ECOSYSTEM GIS MAP (moved between Dashboard and Map pages by JS) -->
+        <section id="mapColumnCard" class="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-5 shadow-2xs flex flex-col">
           <!-- Map Header & Thailand Location Selector -->
           <div class="flex flex-wrap items-start justify-between gap-3 mb-4 pb-3.5 border-b border-slate-100 dark:border-slate-800">
             <div>
               <div class="flex items-center gap-2">
                 <span class="px-2.5 py-0.5 text-[11px] font-bold rounded-full bg-[#F3F8F5] dark:bg-emerald-950 text-[#143328] dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800" data-i18n="map_badge">
-                  🇹🇭 Thailand Forest GIS Network
+                  Thailand Forest GIS Network
                 </span>
                 <h2 class="text-base sm:text-lg font-extrabold text-slate-900 dark:text-white" data-i18n="map_title">
                   แผนที่เครือข่ายเซนเซอร์เฝ้าระวังระบบนิเวศ (Real-Time)
                 </h2>
               </div>
               <p class="text-xs text-slate-500 dark:text-slate-400 mt-1" data-i18n="map_subtitle">
-                คลิกที่สัญลักษณ์เซนเซอร์ (🐘 ช้างป่า · 🪚 เลื่อยยนต์ · 🦗 ธรรมชาติ · 📷 กล้อง AI · 🦇 ค้างคาว) เพื่อดูค่าสภาพอากาศและฟังเสียงสด
+                คลิกที่สัญลักษณ์เซนเซอร์ (ช้างป่า · เลื่อยยนต์ · ธรรมชาติ · กล้อง AI · ค้างคาว) เพื่อดูค่าสภาพอากาศและฟังเสียงสด
               </p>
             </div>
 
@@ -361,18 +357,18 @@
                 id="selectThailandZone"
                 class="px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-100 border border-slate-200 dark:border-slate-700 focus:outline-none focus:border-emerald-600 cursor-pointer"
               >
-                <option value="kuiburi" data-i18n="zone_kuiburi">📍 อุทยานแห่งชาติกุยบุรี จ.ประจวบคีรีขันธ์ (6 โหนด)</option>
-                <option value="thailand" data-i18n="zone_thailand">🇹🇭 แผนที่ภาพรวมประเทศไทย (Thailand Overview)</option>
-                <option value="khaoyai" data-i18n="zone_khaoyai">🌳 อุทยานแห่งชาติเขาใหญ่ จ.นครราชสีมา</option>
-                <option value="huaikhakhaeng" data-i18n="zone_huaikhakhaeng">🐅 เขตรักษาพันธุ์สัตว์ป่าห้วยขาแข้ง จ.อุทัยธานี</option>
+                <option value="kuiburi" data-i18n="zone_kuiburi">อุทยานแห่งชาติกุยบุรี จ.ประจวบคีรีขันธ์ (6 โหนด)</option>
+                <option value="thailand" data-i18n="zone_thailand">แผนที่ภาพรวมประเทศไทย (Thailand Overview)</option>
+                <option value="khaoyai" data-i18n="zone_khaoyai">อุทยานแห่งชาติเขาใหญ่ จ.นครราชสีมา</option>
+                <option value="huaikhakhaeng" data-i18n="zone_huaikhakhaeng">เขตรักษาพันธุ์สัตว์ป่าห้วยขาแข้ง จ.อุทัยธานี</option>
               </select>
 
               <button id="btnToggleMapStyle" type="button" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 transition">
-                🗺️ <span id="mapStyleLabel" data-i18n="map_style_clear">แผนที่ประเทศไทย (ชัดเจน)</span>
+                <span id="mapStyleLabel" data-i18n="map_style_clear">แผนที่ประเทศไทย (ชัดเจน)</span>
               </button>
 
               <button id="btnToggleHeatmap" type="button" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-red-50 hover:bg-red-100 dark:bg-red-950/60 dark:hover:bg-red-900/60 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800 transition flex items-center gap-1" aria-pressed="true">
-                <span>🔥</span>
+                <span></span>
                 <span id="heatmapBtnLabel" data-i18n="heatmap_on">จุดเสี่ยง: เปิด</span>
               </button>
             </div>
@@ -383,19 +379,10 @@
             <div id="leafletMap" class="w-full h-full z-10"></div>
 
             <!-- Clear Legend Pill (Top-Left over Map) -->
-            <div class="absolute top-3 left-3 z-20 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border border-slate-200 dark:border-slate-700 rounded-xl px-3.5 py-2 shadow-md flex flex-wrap items-center gap-3 text-[11px]">
-              <span class="flex items-center gap-1.5 font-bold text-slate-700 dark:text-slate-200">
-                <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
-                <span data-i18n="legend_normal">ปกติ (3)</span>
-              </span>
-              <span class="flex items-center gap-1.5 font-bold text-amber-700 dark:text-amber-400">
-                <span class="w-2.5 h-2.5 rounded-full bg-amber-500 animate-ping"></span>
-                <span data-i18n="legend_alert">แจ้งเตือนภัย (2)</span>
-              </span>
-              <span class="flex items-center gap-1.5 font-bold text-red-600 dark:text-red-400">
-                <span class="w-2.5 h-2.5 rounded-full bg-red-500"></span>
-                <span data-i18n="legend_lowbat">แบตเตอรี่ต่ำ (1)</span>
-              </span>
+            <div class="bb-map-legend">
+              <span class="bb-leg-normal" data-i18n="legend_normal">Normal (3)</span>
+              <span class="bb-leg-alert" data-i18n="legend_alert">Alert (2)</span>
+              <span class="bb-leg-low" data-i18n="legend_lowbat">Low battery (1)</span>
             </div>
           </div>
 
@@ -404,9 +391,23 @@
             <!-- Populated dynamically when clicking/hovering a sensor node -->
           </div>
         </section>
+            </div>
 
-        <!-- RIGHT 5 COLS: EARLY WARNING FEED (PAGE B / RANGER ALERT STREAM) -->
-        <section id="alertColumnCard" class="lg:col-span-5 bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-5 shadow-2xs flex flex-col">
+          </div>
+
+          <aside id="mapPageRight" class="bb-aside-fill">
+            <div class="bb-aside-inner">
+            <!-- Rangers on duty (from Firestore "rangers", registered in Settings) -->
+            <section id="rangersCard" class="bb-card bb-rangers-card" aria-label="Rangers on duty">
+              <div class="bb-card-head">
+                <span class="bb-card-title" data-i18n="rangers_title">Rangers on duty</span>
+                <button type="button" class="bb-link-btn" data-goto="settings" data-i18n="rangers_register">+ Register</button>
+              </div>
+              <div id="rangersOnDutyList" class="bb-ranger-list"></div>
+            </section>
+
+        <!-- EARLY WARNING FEED (LATEST INCIDENTS / RANGER ALERT STREAM) -->
+        <section id="alertColumnCard" class="bb-alerts-card bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-5 shadow-2xs flex flex-col">
           <!-- Mobile Ranger App Banner (Shown in Ranger App mode & on mobile screens) -->
           <div id="mobileRangerAppBanner" class="hidden mb-4 p-3.5 rounded-xl bg-gradient-to-r from-[#143328] to-[#2D6A4F] text-white shadow-sm">
             <div class="flex items-center justify-between gap-3">
@@ -423,39 +424,19 @@
                 </div>
               </div>
               <button id="btnMobileRangerPush" type="button" class="px-3 py-2 rounded-xl bg-white text-[#143328] hover:bg-emerald-50 font-extrabold text-xs shrink-0 shadow-xs transition" data-i18n="btn_mobile_push">
-                🔔 เปิดแจ้งเตือน
+                เปิดแจ้งเตือน
               </button>
             </div>
           </div>
 
-          <div class="flex items-start justify-between gap-2 mb-3 pb-3 border-b border-slate-100 dark:border-slate-800">
-            <div>
-              <div class="flex items-center gap-2">
-                <span class="px-2.5 py-0.5 text-[11px] font-bold rounded-full bg-red-50 dark:bg-red-950 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800">
-                  🚨 Early Warning Feed
-                </span>
-                <span id="incidentCountBadge" class="count-pill">0</span>
-              </div>
-              <h2 id="incidentsHeading" class="text-base sm:text-lg font-extrabold text-slate-900 dark:text-white mt-1" data-i18n="feed_title">
-                รายการแจ้งเตือนภัยคุกคามล่าสุด (Real-Time)
-              </h2>
-              <p class="text-xs text-slate-500 dark:text-slate-400" data-i18n="feed_subtitle">
-                ลำดับตามความเร่งด่วน · กดฟังเสียงหลักฐานและสั่งการเจ้าหน้าที่ได้ทันที
-              </p>
-            </div>
+          <div class="bb-card-head">
+            <span id="incidentsHeading" class="bb-card-title" data-i18n="feed_title_short">Latest incidents</span>
+            <span class="bb-badge bb-badge-danger"><span id="incidentCountBadge">0</span> <span data-i18n="feed_new">new</span></span>
           </div>
-
-          <!-- Filter Pills -->
-          <div class="filter-bar mb-3.5" role="tablist" aria-label="Filter incidents">
-            <button type="button" class="filter-pill active" data-filter="all">
-              <span data-i18n="filter_all">ทั้งหมด</span> <span id="filterCountAll" class="filter-count">0</span>
-            </button>
-            <button type="button" class="filter-pill" data-filter="high">
-              <span data-i18n="filter_high">🔴 ด่วนมาก (High)</span> <span id="filterCountHigh" class="filter-count">0</span>
-            </button>
-            <button type="button" class="filter-pill" data-filter="active">
-              <span data-i18n="filter_active">⏳ รอดำเนินการ</span> <span id="filterCountActive" class="filter-count">0</span>
-            </button>
+          <div class="filter-bar bb-filter-row" role="tablist" aria-label="Filter incidents">
+            <button type="button" class="filter-pill active" data-filter="all"><span data-i18n="filter_all_short">All</span> <span id="filterCountAll" class="filter-count">0</span></button>
+            <button type="button" class="filter-pill" data-filter="high"><span data-i18n="filter_high_short">High</span> <span id="filterCountHigh" class="filter-count">0</span></button>
+            <button type="button" class="filter-pill" data-filter="active"><span data-i18n="filter_active_short">Pending</span> <span id="filterCountActive" class="filter-count">0</span></button>
           </div>
 
           <!-- Loading Skeleton -->
@@ -466,7 +447,7 @@
 
           <!-- Empty State -->
           <div id="incidentsEmpty" class="empty-state hidden my-auto">
-            <div class="empty-icon" aria-hidden="true">🌿</div>
+            <div class="empty-icon" aria-hidden="true"></div>
             <h3 id="emptyStateTitle" class="empty-title" data-i18n="feed_empty_title">ไม่มีรายการแจ้งเตือนในหมวดหมู่นี้</h3>
             <p id="emptyStateDesc" class="empty-desc" data-i18n="feed_empty_desc">
               เหตุการณ์ในป่าปกติ สามารถกดปุ่มจำลองเซนเซอร์ด้านบนเพื่อทดสอบระบบแจ้งเตือนได้ทันที
@@ -474,8 +455,65 @@
           </div>
 
           <!-- Scrollable Alert Cards List -->
-          <div id="incidentsList" class="incidents-list max-h-[530px] overflow-y-auto pr-1" role="list"></div>
+          <div id="incidentsList" class="bb-inc-list" role="list"></div>
         </section>
+            </div>
+          </aside>
+        </div>
+
+            <!-- Sensor status table (PrologELD-style overview table) -->
+            <section id="sensorStatusCard" class="bb-card bb-desktop-only bb-sensor-status" aria-label="Sensor status">
+              <div class="bb-card-head">
+                <span class="bb-card-title" data-i18n="sensor_status_title">Sensor status</span>
+                <button type="button" class="bb-link-btn" data-goto="hardware" data-i18n="see_all">See all</button>
+              </div>
+              <div class="bb-table-wrap">
+                <table class="bb-table">
+                  <thead><tr><th>ID</th><th data-i18n="th_location">Location</th><th data-i18n="th_hardware">Hardware</th><th data-i18n="th_battery">Battery</th><th data-i18n="th_status">Status</th></tr></thead>
+                  <tbody id="sensorStatusBody"></tbody>
+                </table>
+              </div>
+            </section>
+      </div>
+
+      <!-- ==================== PAGE 2A: DATA ANALYSIS (PER-SENSOR, REAL FIRESTORE INCIDENTS) ==================== -->
+      <section id="sectionDataAnalysis" class="hidden bb-data-page" aria-label="Data analysis">
+        <div class="bb-toolbar">
+          <div id="daSensorChips" class="bb-chip-row" role="tablist" aria-label="Choose sensor"></div>
+          <span class="bb-pill-static" data-i18n="da_range">Last 24 hours</span>
+        </div>
+        <section class="bb-card bb-profile" aria-label="Sensor profile">
+          <div id="daProfileInfo" class="bb-profile-info"></div>
+          <div id="daProfileRings" class="bb-profile-rings"></div>
+          <div id="daProfileSide" class="bb-profile-side"></div>
+        </section>
+        <section class="bb-card" aria-label="24 hour acoustic activity">
+          <div class="bb-card-head">
+            <span class="bb-card-title" data-i18n="da_activity_title">Acoustic activity · last 24 hours</span>
+            <span class="bb-muted" data-i18n="da_activity_sub">Detected sound class per hour (from Firestore incidents)</span>
+          </div>
+          <div id="daActivityChart" class="bb-activity"></div>
+        </section>
+        <section class="bb-card" aria-label="Event log">
+          <div class="bb-card-head">
+            <span class="bb-card-title" data-i18n="da_log_title">Event log</span>
+            <button id="btnDaExport" type="button" class="bb-btn bb-btn-ghost" data-i18n="da_export">Export CSV</button>
+          </div>
+          <div class="bb-table-wrap">
+            <table class="bb-table">
+              <thead><tr><th data-i18n="th_time">Time</th><th data-i18n="th_sensor">Sensor</th><th data-i18n="th_event">Event</th><th data-i18n="th_confidence">Confidence</th><th data-i18n="th_urgency">Urgency</th><th data-i18n="th_status">Status</th><th data-i18n="th_audio">Audio</th></tr></thead>
+              <tbody id="daEventBody"></tbody>
+            </table>
+          </div>
+        </section>
+      </section>
+
+      <div id="esgToggleRow" class="hidden bb-card bb-esg-toggle">
+        <div class="bb-esg-toggle-text">
+          <span class="bb-card-title" data-i18n="esg_toggle_title">Roadmap preview · Big Data &amp; ESG</span>
+          <span class="bb-muted" data-i18n="esg_toggle_sub">Mock-up with illustrative data, for sponsors and researchers</span>
+        </div>
+        <button id="btnToggleEsg" type="button" class="bb-btn bb-btn-ghost bb-btn-sm" aria-expanded="false" data-i18n="esg_show">Show</button>
       </div>
 
       <!-- ==================== PAGE 2: BIG DATA & RESEARCH ANALYTICS (HIDDEN UNTIL TAB 2 CLICKED) ==================== -->
@@ -484,10 +522,13 @@
           <div>
             <div class="flex flex-wrap items-center gap-2">
               <span class="px-2.5 py-0.5 text-[11px] font-bold rounded-full bg-sky-50 dark:bg-sky-950 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-800">
-                📊 Big Data &amp; ESG Analytics
+                Big Data &amp; ESG Analytics
+              </span>
+              <span class="px-2.5 py-0.5 text-[11px] font-bold rounded-full bg-amber-50 dark:bg-amber-950 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-800">
+                Mock-up · illustrative data (roadmap preview)
               </span>
               <span class="text-xs font-semibold text-[#143328] dark:text-emerald-300 bg-[#F3F8F5] dark:bg-emerald-950/80 border border-emerald-200 dark:border-emerald-800 px-2.5 py-0.5 rounded-full" data-i18n="analytics_sponsor_tag">
-                💼 สำหรับผู้สนับสนุนองค์กร · สนามบิน · WWF / UN · สถาบันวิจัย
+                สำหรับผู้สนับสนุนองค์กร · สนามบิน · WWF / UN · สถาบันวิจัย
               </span>
             </div>
             <h2 class="text-lg sm:text-xl font-extrabold text-slate-900 dark:text-white mt-1.5" data-i18n="analytics_title">
@@ -501,7 +542,7 @@
           <!-- Export Dataset Buttons -->
           <div class="flex flex-wrap items-center gap-2.5">
             <button id="btnExportCsv" type="button" class="px-4 py-2.5 rounded-xl text-xs font-bold bg-[#143328] hover:bg-[#1B4332] text-white shadow-sm transition flex items-center gap-1.5">
-              <span>⬇️</span>
+              <span></span>
               <span data-i18n="btn_export_csv">ดาวน์โหลด Dataset (CSV)</span>
             </button>
             <button id="btnExportJson" type="button" class="px-4 py-2.5 rounded-xl text-xs font-semibold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 transition flex items-center gap-1.5">
@@ -513,7 +554,7 @@
 
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
           <!-- Chart 1: Multi-Sensor Correlation -->
-          <div class="lg:col-span-5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 flex flex-col">
+          <div class="bb-esg-chart lg:col-span-6 bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 flex flex-col">
             <div class="flex items-center justify-between mb-3">
               <div>
                 <h3 class="text-sm font-bold text-slate-900 dark:text-white" data-i18n="chart1_title">
@@ -533,7 +574,7 @@
           </div>
 
           <!-- Chart 2: 6-Modality Data Ingestion -->
-          <div class="lg:col-span-4 bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 flex flex-col">
+          <div class="bb-esg-chart lg:col-span-6 bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 flex flex-col">
             <div class="flex items-center justify-between mb-3">
               <div>
                 <h3 class="text-sm font-bold text-slate-900 dark:text-white" data-i18n="chart2_title">
@@ -553,7 +594,7 @@
           </div>
 
           <!-- Carbon & Ecology Index Summary Card -->
-          <div class="lg:col-span-3 bg-gradient-to-br from-[#143328] to-[#2D6A4F] text-white rounded-2xl p-5 shadow-md flex flex-col justify-between">
+          <div class="bb-esg-band lg:col-span-12 text-white rounded-2xl">
             <div>
               <div class="flex items-center justify-between">
                 <span class="text-[11px] font-bold uppercase tracking-wider text-emerald-200">Carbon &amp; Ecology Index</span>
@@ -573,19 +614,19 @@
 
               <div class="mt-4 space-y-2.5 text-xs">
                 <div class="flex items-center justify-between py-1 border-b border-white/15">
-                  <span class="text-emerald-100" data-i18n="esg_row_carbon">🌳 คาร์บอนสะสมที่ปกป้องได้</span>
+                  <span class="text-emerald-100" data-i18n="esg_row_carbon">คาร์บอนสะสมที่ปกป้องได้</span>
                   <strong class="font-bold text-white">142,850 tCO₂e</strong>
                 </div>
                 <div class="flex items-center justify-between py-1 border-b border-white/15">
-                  <span class="text-emerald-100" data-i18n="esg_row_aci">🦇 ดัชนีความหลากหลายทางเสียง</span>
+                  <span class="text-emerald-100" data-i18n="esg_row_aci">ดัชนีความหลากหลายทางเสียง</span>
                   <strong class="font-bold text-white">8.74 ACI</strong>
                 </div>
                 <div class="flex items-center justify-between py-1 border-b border-white/15">
-                  <span class="text-emerald-100" data-i18n="esg_row_logging">🪚 ป้องกันการลักลอบตัดไม้</span>
+                  <span class="text-emerald-100" data-i18n="esg_row_logging">ป้องกันการลักลอบตัดไม้</span>
                   <strong class="font-bold text-white" data-i18n="esg_row_logging_val">18 ครั้งในปีนี้</strong>
                 </div>
                 <div class="flex items-center justify-between py-1">
-                  <span class="text-emerald-100" data-i18n="esg_row_crop">🐘 ลดความเสียหายพืชผลเกษตร</span>
+                  <span class="text-emerald-100" data-i18n="esg_row_crop">ลดความเสียหายพืชผลเกษตร</span>
                   <strong class="font-bold text-white">-68% YoY</strong>
                 </div>
               </div>
@@ -599,59 +640,105 @@
       </section>
 
       <!-- ==================== PAGE 3: HARDWARE INTEGRATION & SYSTEM HEALTH (HIDDEN UNTIL TAB 3 CLICKED) ==================== -->
-      <section id="sectionHardware" class="hidden bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-6 shadow-2xs">
-        <div class="flex flex-wrap items-start justify-between gap-4 mb-6 pb-4 border-b border-slate-100 dark:border-slate-800">
-          <div>
-            <span class="px-2.5 py-0.5 text-[11px] font-bold rounded-full bg-purple-50 dark:bg-purple-950 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800">
-              🔌 Hardware Integration &amp; Cloud Health
-            </span>
-            <h2 class="text-lg sm:text-xl font-extrabold text-slate-900 dark:text-white mt-1.5" data-i18n="hw_title">
-              ทะเบียนอุปกรณ์เซนเซอร์ภาคสนาม และสถานะการเชื่อมต่อ Cloud Microservices
-            </h2>
-            <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400" data-i18n="hw_subtitle">
-              รองรับการเชื่อมต่อกับฮาร์ดแวร์เดิมของอุทยานฯ (ESP32, Raspberry Pi, กล้องดักถ่าย CCTV, Ultrasonic) เข้าสู่ Google Cloud Run
-            </p>
+      <!-- ==================== PAGE 3: SENSORS & SYSTEM STATUS ==================== -->
+      <section id="sectionHardware" class="hidden bb-sensors-page" aria-label="Sensors">
+        <div class="bb-toolbar">
+          <div class="bb-chip-row">
+            <span class="bb-badge bb-badge-muted" data-i18n="hw_badge_health">Device &amp; cloud health</span>
+            <span class="bb-badge bb-badge-mock" data-i18n="mock_roadmap">Mock-up · illustrative data (roadmap preview)</span>
           </div>
-
-          <!-- Microservices Health Indicators -->
-          <div class="flex flex-wrap items-center gap-2.5">
-            <div class="px-3.5 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center gap-2 text-xs">
-              <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
-              <span class="text-slate-600 dark:text-slate-300">Cloud Run `/analyze`:</span>
-              <strong class="text-emerald-700 dark:text-emerald-400" data-i18n="health_ready">พร้อมใช้งาน</strong>
-            </div>
-            <div class="px-3.5 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center gap-2 text-xs">
-              <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
-              <span class="text-slate-600 dark:text-slate-300">Gemini 2.5 Flash:</span>
-              <strong class="text-emerald-700 dark:text-emerald-400" data-i18n="health_online">ออนไลน์</strong>
-            </div>
-            <div class="px-3.5 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center gap-2 text-xs">
-              <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
-              <span class="text-slate-600 dark:text-slate-300">Firestore &amp; FCM:</span>
-              <strong class="text-emerald-700 dark:text-emerald-400" data-i18n="health_synced">ซิงค์ข้อมูลสด</strong>
-            </div>
+          <div class="bb-chip-row">
+            <span class="bb-health"><span class="bb-dot"></span>Cloud Run: <strong data-i18n="health_ready">ready</strong></span>
+            <span class="bb-health"><span class="bb-dot"></span>Gemini 3.8 Flash: <strong data-i18n="health_online">online</strong></span>
+            <span class="bb-health"><span class="bb-dot"></span>Firestore &amp; FCM: <strong data-i18n="health_synced">synced</strong></span>
           </div>
         </div>
+        <p class="bb-muted bb-page-sub" data-i18n="hw_subtitle">Field hardware (ESP32, Raspberry Pi, CCTV, ultrasonic) reporting to Google Cloud Run</p>
+        <section class="bb-stats-row" aria-label="Device summary">
+          <div class="bb-card bb-stat"><div class="bb-stat-body"><span class="bb-kpi-label" data-i18n="hw_stat_online">Devices online</span><span id="hwStatOnline" class="bb-stat-value">0</span></div></div>
+          <div class="bb-card bb-stat"><div class="bb-stat-body"><span class="bb-kpi-label" data-i18n="hw_stat_avgbat">Average battery</span><span id="hwStatAvgBat" class="bb-stat-value">0%</span></div></div>
+          <div class="bb-card bb-stat"><div class="bb-stat-body"><span class="bb-kpi-label" data-i18n="hw_stat_low">Low battery</span><span id="hwStatLow" class="bb-stat-value bb-text-danger">0</span></div></div>
+          <div class="bb-card bb-stat"><div class="bb-stat-body"><span class="bb-kpi-label" data-i18n="hw_stat_alert">Devices in alert</span><span id="hwStatAlert" class="bb-stat-value bb-text-earth">0</span></div></div>
+        </section>
+        <section class="bb-card" aria-label="Device registry">
+          <div class="bb-table-wrap">
+            <table class="bb-table bb-table-lg">
+              <thead><tr>
+                <th data-i18n="th_sensor">Sensor</th>
+                <th data-i18n="th_col_platform_short">Hardware platform</th>
+                <th data-i18n="th_col_sensors_short">Modalities</th>
+                <th data-i18n="th_col_protocol_short">Protocol</th>
+                <th data-i18n="th_col_battery_short">Battery / solar</th>
+                <th data-i18n="th_status">Status</th>
+                <th data-i18n="th_col_action_short">Action</th>
+              </tr></thead>
+              <tbody id="deviceRegistryTableBody"></tbody>
+            </table>
+          </div>
+        </section>
+      </section>
 
-        <!-- Clean Enterprise Table -->
-        <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800">
-          <table class="w-full text-left border-collapse text-xs">
-            <thead>
-              <tr class="bg-slate-50 dark:bg-slate-800/80 text-slate-600 dark:text-slate-300 font-bold uppercase tracking-wider text-[11px] border-b border-slate-200 dark:border-slate-800">
-                <th class="py-3.5 px-4" data-i18n="th_col_device">รหัสโหนด &amp; จุดติดตั้ง</th>
-                <th class="py-3.5 px-4" data-i18n="th_col_platform">ฮาร์ดแวร์ (Hardware Platform)</th>
-                <th class="py-3.5 px-4" data-i18n="th_col_sensors">เซนเซอร์ที่เชื่อมต่อ (Modalities)</th>
-                <th class="py-3.5 px-4" data-i18n="th_col_protocol">โปรโตคอลส่งข้อมูล</th>
-                <th class="py-3.5 px-4" data-i18n="th_col_battery">ระดับแบตเตอรี่ / โซลาร์เซลล์</th>
-                <th class="py-3.5 px-4" data-i18n="th_col_status">สถานะ</th>
-                <th class="py-3.5 px-4 text-right" data-i18n="th_col_action">การจัดการ</th>
-              </tr>
-            </thead>
-            <tbody id="deviceRegistryTableBody" class="divide-y divide-slate-200/70 dark:divide-slate-800">
-              <!-- Populated dynamically by public/js/app.js -->
-            </tbody>
-          </table>
+      <!-- ==================== PAGE 5: RANGER APP (FIELD RESPONSE) ==================== -->
+      <section id="sectionRanger" class="hidden bb-ranger-grid" aria-label="Ranger app">
+        <div class="bb-col">
+          <section id="rangerActiveCard" class="bb-card bb-active" aria-live="polite"></section>
         </div>
+        <aside class="bb-col">
+          <section id="rangerProfileCard" class="bb-card" aria-label="My profile"></section>
+          <section class="bb-card" aria-label="Emergency push alerts">
+            <div class="bb-card-head"><span class="bb-card-title" data-i18n="ranger_push_title">Emergency push alerts</span></div>
+            <p id="rangerPushStatus" class="bb-push-status"></p>
+            <p class="bb-muted bb-tight" data-i18n="ranger_push_hint">On iPhone: Share → Add to Home Screen first (iOS 16.4+), then allow notifications.</p>
+            <button id="btnRangerPush" type="button" class="bb-btn bb-btn-ghost bb-btn-sm" data-i18n="btn_enable_alerts">Enable alerts</button>
+          </section>
+          <section class="bb-card" aria-label="Queue">
+            <div class="bb-card-head"><span class="bb-card-title" data-i18n="ranger_queue">Queue</span><span id="rangerQueueCount" class="bb-badge bb-badge-danger">0</span></div>
+            <div id="rangerQueue" class="bb-queue"></div>
+          </section>
+        </aside>
+      </section>
+
+      <!-- ==================== PAGE 4: SETTINGS (RANGER REGISTRATION, SAVED TO FIRESTORE "rangers") ==================== -->
+      <section id="sectionSettings" class="hidden bb-settings-grid" aria-label="Settings">
+        <form id="rangerForm" class="bb-card bb-form" novalidate>
+          <div class="bb-card-head">
+            <span class="bb-card-title bb-card-title-lg" data-i18n="set_form_title">Register / edit my profile</span>
+            <span id="rangerSaveStatus" class="bb-badge bb-badge-muted" data-i18n="set_not_registered">Not registered yet</span>
+          </div>
+          <div class="bb-avatar-row">
+            <span id="rangerAvatar" class="bb-avatar bb-avatar-lg">?</span>
+            <span class="bb-muted" data-i18n="set_avatar_note">Your initials are used as the avatar in "Rangers on duty".</span>
+          </div>
+          <div class="bb-form-grid">
+            <label class="bb-field"><span><span data-i18n="set_name">Full name</span> *</span><input id="rangerName" type="text" maxlength="80" required autocomplete="name" /></label>
+            <label class="bb-field"><span><span data-i18n="set_phone">Phone number</span> *</span><input id="rangerPhone" type="tel" maxlength="20" required autocomplete="tel" placeholder="08X-XXX-XXXX" /></label>
+            <label class="bb-field"><span data-i18n="set_role">Role / position</span><input id="rangerRole" type="text" maxlength="60" data-i18n-placeholder="set_role_ph" placeholder="Patrol lead" /></label>
+            <label class="bb-field"><span data-i18n="set_agency">Agency / unit</span><input id="rangerAgency" type="text" maxlength="80" data-i18n-placeholder="set_agency_ph" placeholder="Dept. of National Parks, Kui Buri" /></label>
+            <label class="bb-field"><span data-i18n="set_station">Station / area</span><select id="rangerStation"></select></label>
+            <label class="bb-field"><span data-i18n="set_line">LINE ID (optional)</span><input id="rangerLine" type="text" maxlength="40" placeholder="@line-id" /></label>
+          </div>
+          <label class="bb-check"><input id="rangerOnDuty" type="checkbox" checked /><span data-i18n="set_on_duty">On duty — show me in "Rangers on duty"</span></label>
+          <p class="bb-muted bb-privacy" data-i18n="set_privacy">Saved to Firestore and visible to everyone who opens this dashboard. Use test details for the demo.</p>
+          <div id="rangerFormError" class="error-banner hidden" role="alert"></div>
+          <div class="bb-form-actions">
+            <button id="btnRangerReset" type="button" class="bb-btn bb-btn-ghost" data-i18n="set_cancel">Cancel</button>
+            <button id="btnRangerSave" type="submit" class="bb-btn bb-btn-primary" data-i18n="set_save">Save profile</button>
+          </div>
+        </form>
+
+        <aside class="bb-col">
+          <section id="accountCard" class="bb-card bb-account-card" aria-label="Account"></section>
+          <section class="bb-card" aria-label="Registered rangers">
+            <div class="bb-card-head"><span class="bb-card-title"><span data-i18n="set_registered">Registered rangers</span> (<span id="rangersCount">0</span>)</span></div>
+            <div id="rangersAllList" class="bb-ranger-list"></div>
+          </section>
+          <section class="bb-card" aria-label="Preferences">
+            <div class="bb-card-head"><span class="bb-card-title" data-i18n="set_prefs">Preferences</span></div>
+            <div class="bb-pref-row"><span data-i18n="set_pref_lang">Language</span><button id="prefLang" type="button" class="bb-btn bb-btn-ghost bb-btn-sm">TH / EN</button></div>
+            <div class="bb-pref-row"><span data-i18n="set_pref_dark">Dark mode</span><button id="prefTheme" type="button" class="bb-switch" role="switch" aria-checked="false" aria-label="Dark mode"><span></span></button></div>
+            <div class="bb-pref-row"><span data-i18n="set_pref_push">Emergency push alerts</span><button id="prefPush" type="button" class="bb-btn bb-btn-ghost bb-btn-sm" data-i18n="btn_enable_alerts">Enable</button></div>
+          </section>
+        </aside>
       </section>
 
     </div>
@@ -673,27 +760,26 @@
           </div>
         </div>
         <button id="btnCloseAiChat" type="button" class="text-white/80 hover:text-white text-sm font-bold px-2 py-1 rounded-lg">
-          ✕
-        </button>
+                  </button>
       </div>
 
       <!-- Suggested Prompts -->
       <div class="px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-800 flex flex-wrap gap-1.5">
         <button type="button" class="ai-prompt-chip text-[11px] font-medium bg-white dark:bg-slate-900 hover:bg-emerald-50 dark:hover:bg-emerald-950/60 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 rounded-full px-3 py-1 transition shadow-2xs" data-prompt="elephant" data-i18n="ai_chip_elephant">
-          🐘 สรุปเหตุช้างบุกรุกเดือนนี้
+          สรุปเหตุช้างบุกรุกเดือนนี้
         </button>
         <button type="button" class="ai-prompt-chip text-[11px] font-medium bg-white dark:bg-slate-900 hover:bg-emerald-50 dark:hover:bg-emerald-950/60 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 rounded-full px-3 py-1 transition shadow-2xs" data-prompt="fire" data-i18n="ai_chip_fire">
-          🔥 พื้นที่เสี่ยงความชื้นต่ำ/ไฟป่า
+          พื้นที่เสี่ยงความชื้นต่ำ/ไฟป่า
         </button>
         <button type="button" class="ai-prompt-chip text-[11px] font-medium bg-white dark:bg-slate-900 hover:bg-emerald-50 dark:hover:bg-emerald-950/60 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 rounded-full px-3 py-1 transition shadow-2xs" data-prompt="chainsaw" data-i18n="ai_chip_chainsaw">
-          🪚 สร้าง Report เลื่อยยนต์ส่งตำรวจ
+          สร้าง Report เลื่อยยนต์ส่งตำรวจ
         </button>
       </div>
 
       <!-- Chat History -->
       <div id="aiChatHistory" class="p-4 space-y-3 max-h-[300px] overflow-y-auto text-xs bg-white dark:bg-slate-900">
         <div class="ai-msg ai-msg-bot">
-          <div class="font-bold text-[#143328] dark:text-emerald-400 mb-1">✨ Blimbloom Gemini Assistant</div>
+          <div class="font-bold text-[#143328] dark:text-emerald-400 mb-1">Blimbloom Gemini Assistant</div>
           <p class="text-slate-700 dark:text-slate-200 leading-relaxed m-0" data-i18n="ai_welcome">
             สวัสดีครับ! ผมเชื่อมต่อกับฐานข้อมูล Ecosystem Big Data ของอุทยานแห่งชาติในประเทศไทยแล้ว กดปุ่มคำถามตัวอย่างด้านบน หรือพิมพ์ถามเกี่ยวกับข้อมูลสัตว์ป่า อุณหภูมิ ความชื้น หรือรายงานสรุปได้เลยครับ
           </p>
@@ -716,34 +802,38 @@
     </section>
 
     <!-- Floating Trigger Button -->
-    <button id="btnToggleAiChat" type="button" class="mb-14 md:mb-0 px-4 py-3 rounded-full bg-[#143328] hover:bg-[#1B4332] dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white font-bold text-xs sm:text-sm shadow-lg flex items-center gap-2.5 transition transform hover:scale-105 border border-white/15">
+    <button id="btnToggleAiChat" type="button" aria-label="Blimbloom AI Assistant" class="mb-20 lg:mb-0 px-4 py-3 rounded-full bg-[#143328] hover:bg-[#1B4332] dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white font-bold text-xs sm:text-sm shadow-lg flex items-center gap-2.5 transition transform hover:scale-105 border border-white/15">
       <img src="./icons/blimbloom-emblem.png" alt="" class="w-6 h-6 rounded-full" />
       <span>Blimbloom AI Assistant</span>
     </button>
   </div>
 
   <!-- ==================== NATIVE-STYLE MOBILE BOTTOM NAVIGATION BAR (SMARTPHONES / PWA) ==================== -->
-  <nav id="mobileBottomNav" class="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 px-2 pt-1.5 pb-[max(0.4rem,env(safe-area-inset-bottom))] grid grid-cols-4 gap-1 shadow-lg" aria-label="Mobile Bottom Navigation">
-    <button type="button" class="nav-view-btn flex flex-col items-center justify-center py-1.5 rounded-xl text-[11px] font-bold" data-view="mobile-ranger">
-      <span class="text-base leading-none mb-0.5">🚨</span>
-      <span data-i18n="bottom_nav_alerts">แจ้งเตือนด่วน</span>
+  <nav id="mobileBottomNav" class="bb-bottom-nav" aria-label="Mobile Bottom Navigation">
+    <button type="button" class="nav-view-btn bb-bottom-item active" data-view="dashboard">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>
+      <span data-i18n="bottom_nav_home">Home</span>
     </button>
-    <button type="button" class="nav-view-btn active flex flex-col items-center justify-center py-1.5 rounded-xl text-[11px] font-bold" data-view="map-alerts">
-      <span class="text-base leading-none mb-0.5">🗺️</span>
-      <span data-i18n="bottom_nav_map">แผนที่ป่า</span>
+    <button type="button" class="nav-view-btn bb-bottom-item" data-view="map-alerts">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 21s-7-6.1-7-11a7 7 0 0 1 14 0c0 4.9-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>
+      <span data-i18n="bottom_nav_map">Map</span>
     </button>
-    <button type="button" class="nav-view-btn flex flex-col items-center justify-center py-1.5 rounded-xl text-[11px] font-bold" data-view="analytics">
-      <span class="text-base leading-none mb-0.5">📊</span>
-      <span data-i18n="bottom_nav_analytics">ข้อมูลวิจัย</span>
+    <button type="button" class="nav-view-btn bb-bottom-item" data-view="analytics">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5"/><path d="M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></svg>
+      <span data-i18n="bottom_nav_analytics">Data</span>
     </button>
-    <button type="button" class="nav-view-btn flex flex-col items-center justify-center py-1.5 rounded-xl text-[11px] font-bold" data-view="hardware">
-      <span class="text-base leading-none mb-0.5">🔌</span>
-      <span data-i18n="bottom_nav_hardware">เซนเซอร์</span>
+    <button type="button" class="nav-view-btn bb-bottom-item" data-view="hardware">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="2"/><path d="M8.5 8.5a5 5 0 0 0 0 7M15.5 8.5a5 5 0 0 1 0 7M5.6 5.6a9 9 0 0 0 0 12.8M18.4 5.6a9 9 0 0 1 0 12.8"/></svg>
+      <span data-i18n="bottom_nav_hardware">Sensors</span>
+    </button>
+    <button type="button" class="nav-view-btn bb-bottom-item" data-view="mobile-ranger">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="9" r="4"/><path d="M7 8h10M4 21c1-4 4.5-6 8-6s7 2 8 6"/></svg>
+      <span data-i18n="bottom_nav_ranger">Ranger</span>
     </button>
   </nav>
 
   <!-- ==================== OFFICIAL FOOTER WITH FULL BRAND LOGO ==================== -->
-  <footer class="mt-auto bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 py-6 pb-20 md:pb-6 px-4 sm:px-6">
+  <footer class="mt-auto bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 py-6 pb-24 lg:pb-6 px-4 sm:px-6">
     <div class="max-w-[1400px] mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500 dark:text-slate-400">
       <div class="flex items-center gap-3">
         <img src="./icons/blimbloom-logo.png" alt="Blimbloom Logo" class="w-12 h-12 rounded-xl object-contain border border-slate-200 dark:border-slate-700 bg-[#FAF9F6] p-0.5" />
@@ -757,11 +847,13 @@
       </div>
     </div>
   </footer>
+  </div><!-- /.bb-content -->
+  </div><!-- /.bb-shell -->
 
   <!-- Toast Container -->
   <div id="toastContainer" class="toast-container" aria-live="assertive"></div>
 
   <!-- Main Application Script -->
-  <script type="module" src="./js/app.js"></script>
+  <script type="module" src="./js/app.js?v9"></script>
 </body>
 </html>

@@ -13,8 +13,34 @@ service cloud.firestore {
 
     // Subscribers: Client can register FCM token, only Cloud Run Admin SDK reads tokens.
     match /subscribers/{token} {
-      allow create: if true;
-      allow read, update, delete: if false;
+      allow create, update: if true;
+      allow read, delete: if false;
+    }
+
+    // Users: private account profile, only the signed-in owner can read or write it.
+    match /users/{uid} {
+      allow read, delete: if request.auth != null && request.auth.uid == uid;
+      allow create, update: if request.auth != null && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['name', 'phone', 'email', 'role', 'agency', 'station', 'line_id', 'on_duty', 'lang', 'theme', 'created_at', 'updated_at'])
+        && (!('name' in request.resource.data) || (request.resource.data.name is string && request.resource.data.name.size() <= 80))
+        && (!('phone' in request.resource.data) || (request.resource.data.phone is string && request.resource.data.phone.size() <= 20))
+        && (!('on_duty' in request.resource.data) || request.resource.data.on_duty is bool);
+    }
+
+    // Rangers: contact registry from the Settings page (demo, no sign-in).
+    // Anyone may read; writes must match the expected shape and sizes.
+    match /rangers/{rangerId} {
+      allow read: if true;
+      allow create, update: if rangerId.matches('r_[A-Za-z0-9]{1,40}')
+        && request.resource.data.keys().hasOnly(['name', 'phone', 'role', 'agency', 'station', 'line_id', 'on_duty', 'created_at', 'updated_at'])
+        && request.resource.data.name is string && request.resource.data.name.size() > 0 && request.resource.data.name.size() <= 80
+        && request.resource.data.phone is string && request.resource.data.phone.size() >= 6 && request.resource.data.phone.size() <= 20
+        && request.resource.data.role is string && request.resource.data.role.size() <= 60
+        && request.resource.data.agency is string && request.resource.data.agency.size() <= 80
+        && request.resource.data.station is string && request.resource.data.station.size() <= 20
+        && request.resource.data.line_id is string && request.resource.data.line_id.size() <= 40
+        && request.resource.data.on_duty is bool;
+      allow delete: if false;
     }
   }
 }
